@@ -21,14 +21,14 @@ tempsock = "/tmp/drop"
 
 # TODO
 #
-VERSION = "0.1a"
-# /usr/share/icons/hicolor/48x48/apps/
-ICONDIR = "./DropIcons"
-DEVMODE = True
-DropUser = "gaz"
-DropRoot = "/home/"+DropUser+"/Drop/"
-DropLand = DropRoot+"Landed/"
-DropStage= DropRoot+".staging/"
+VERSION   = "0.1a"
+ICONDIR   = "./DropIcons"
+DEVMODE   = True
+GetMyUser = subprocess.run("who | awk '{print $1}'", shell=True, stdout=subprocess.PIPE)
+DropUser  = GetMyUser.stdout.decode("utf8").rstrip()
+DropRoot  = "/home/"+DropUser+"/Drop/"
+DropLand  = DropRoot+"Landed/"
+DropStage = DropRoot+".staging/"
 
 ## Do our required directories exist?
 
@@ -59,13 +59,7 @@ def alert(msg):
     md = Gtk.MessageDialog(parent, 0, Gtk.MessageType.INFO, Gtk.ButtonsType.CLOSE, msg)
     md.run()
     md.destroy()
-#
-# # Check for VLC
-# isVLC = subprocess.run(["which vlc"], stdout=subprocess.PIPE, shell=True)
-# # print(isVL/C.stdout)
-# if (isVLC.stdout==b''):
-#     alert("VLC is not installed, cannot continue")
-#     quit()
+
 class Modes:
     IDLE = 0
     DROP = 1
@@ -81,10 +75,8 @@ else:
 
 # ############################################################################## Indicator
 class IndicatorDrop:
-    # statusIcons = [ "KodiKast-Red", "KodiKast-Grn", "KodiKast-Ylw", "KodiKast-Ppl" ]
     statusIcons = [ "dropicon", "droprecv", "dropsend0", "dropsend1", "dropsend2", "dropsend3", "dropsend4", "dropsend5", "dropsend6", "dropsend7", "dropsend8" ]
-    # idle, transfering, file delivered here
-    lastpoll = None
+    lastpoll    = None
 
     def __init__(self):
         self.ind = AppIndicator.Indicator.new("indicator-drop", self.statusIcons[0], AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
@@ -147,10 +139,6 @@ Simple transfers across LAN with avahi
 
     def handler_menu_exit(self, evt):
         self.exit()
-
-    def dropEvent(self, evt):
-        # no idea, docs are down for api so cant do this today
-        pass
 
     def fileCheck(self):
         # check for os err on ls
