@@ -15,12 +15,13 @@ import shutil
 import urllib.parse,time,os,signal,sys
 from random import randint
 from zeroconf import ServiceBrowser, Zeroconf
+from contextlib import suppress
 
 tempsock = "/tmp/drop"
 
 # TODO
 #
-VERSION = "0.5a"
+VERSION = "0.1a"
 # /usr/share/icons/hicolor/48x48/apps/
 ICONDIR = "./DropIcons"
 DEVMODE = True
@@ -30,12 +31,18 @@ DropLand = DropRoot+"Landed/"
 DropStage= DropRoot+".staging/"
 
 ## Do our required directories exist?
-if not os.path.isdir(DropRoot):
-    os.mkdir(DropLand)
 
-if not os.path.isdir(DropStage):
-    os.mkdir(DropStage)
+def makeUserFolder(folderName):
+    os.mkdir(folderName, 0o0755)
+    shutil.chown(folderName, user=DropUser, group=DropUser)
 
+try:
+    if not os.path.isdir(DropRoot ): makeUserFolder(DropRoot)
+    if not os.path.isdir(DropLand ): makeUserFolder(DropLand)
+    if not os.path.isdir(DropStage): makeUserFolder(DropStage)
+except:
+    print("Could not create home directories")
+    exit()
 
 ## Utility functions
 def shellquote(s):
@@ -64,6 +71,13 @@ class Modes:
     DROP = 1
     SEND = 2
     RECV = 3
+
+MYHOSTNAME=""
+if socket.gethostname().find('.')>=0:
+    MYHOSTNAME=socket.gethostname()
+else:
+    MYHOSTNAME=socket.gethostbyaddr(socket.gethostname())[0]
+
 
 # ############################################################################## Indicator
 class IndicatorDrop:
@@ -144,8 +158,13 @@ Simple transfers across LAN with avahi
         try:
             fileList = subprocess.run("\ls "+DropRoot+"*/*", stdout=subprocess.PIPE, shell=True)
             # If we haven't thrown an error, there could be files
-            print(fileList)
-        except CalledProcessError as err:
+            if fileList.returncode!=0:
+                print("No files found")
+            else:
+                print("Must move the following to .staging")
+                print(fileList.stdout)
+                print("Should now copy everything")
+        except err:
             print("No files found")
             return True
 
@@ -197,8 +216,9 @@ class AvahiListener(object):
             servfile = open("/etc/avahi/services/Drop.service", "w")
             print(service, file=servfile)
             servfile.close()
-        except e:
+        except:
             print("You are probably running as something other than root")
+            exit()
 
 
     def remove_service(self, zeroconf, type, name):
@@ -213,15 +233,19 @@ class AvahiListener(object):
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
         # subitem = Gtk.CheckMenuItem()
-        newServ = DropRoot+info.server
-        os.mkdir(newServ, 0o0755)
-        shutil.chown(newServ, user=DropUser, group=DropUser)
-        self.Hosts.append({"name": name, "info": info})
+        print("new server %s \n me %s" % (info.server, MYHOSTNAME))
+        if info.server == MYHOSTNAME+".local.":
+            print("Not adding myself")
+        else:
+            newServ = DropRoot+info.server
+            os.mkdir(newServ, 0o0755)
+            shutil.chown(newServ, user=DropUser, group=DropUser)
+            self.Hosts.append({"name": name, "info": info})
 
     def setTarget(self, targetobj):
         self.target = targetobj
 
-    def unpublish(self, zeroconf):
+    def unpublish(self):
         os.remove("/etc/avahi/services/Drop.service")
 
 # ############################################################################## Main
@@ -239,9 +263,12 @@ if __name__ == "__main__":
 
     except Exception as e:
         print(e)
+        with suppress(Exception):
+          listener.unpublish()
+          ind.exit()
         exit()
     finally:
-        print("Ungraceful exit")
-        # observer.stop()
-        # listener.unpublish()
-        # ind.exit()
+        with suppress(Exception):
+          listener.unpublish()
+          ind.exit()
+        print("Bye.")
