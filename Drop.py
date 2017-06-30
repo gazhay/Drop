@@ -26,7 +26,7 @@ ICONDIR   = "./DropIcons"
 DEVMODE   = True
 GetMyUser = subprocess.run("who | awk '{print $1}'", shell=True, stdout=subprocess.PIPE)
 DropUser  = GetMyUser.stdout.decode("utf8").rstrip()
-print("Local user will be %s" DropUser)
+print("Local user will be %s" % DropUser)
 DropRoot  = "/home/"+DropUser+"/Drop/"
 DropLand  = DropRoot+"Landed/"
 DropStage = DropRoot+".staging/"
