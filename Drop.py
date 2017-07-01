@@ -11,11 +11,12 @@ except:
     from gi.repository import AppIndicator
 
 import re,subprocess,socket
-import shutil
+import shutil, glob
 import urllib.parse,time,os,signal,sys
 from random import randint
 from zeroconf import ServiceBrowser, Zeroconf
 from contextlib import suppress
+from threading import Thread
 
 tempsock = "/tmp/drop"
 
@@ -30,6 +31,7 @@ print("Local user will be %s" % DropUser)
 DropRoot  = "/home/"+DropUser+"/Drop/"
 DropLand  = DropRoot+"Landed/"
 DropStage = DropRoot+".staging/"
+DropPort  = 58769
 
 ## Do our required directories exist?
 
@@ -73,11 +75,93 @@ if socket.gethostname().find('.')>=0:
 else:
     MYHOSTNAME=socket.gethostbyaddr(socket.gethostname())[0]
 
+# ############################################################################## Threaded Web comms
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+# HTTPRequestHandler class
+class TransferHandler(BaseHTTPRequestHandler):
+
+    # # DO NEED PORTS YOU IDIOT!!
+
+    def do_GET(self):
+        self.send_response(200)
+        (servername, serverport) = self.client_address
+        if self.path=="/?DropPing":
+            print("Ping Recevied from %s" % servername)
+            # Send headers
+            self.send_header('Content-type','text/plain')
+            self.end_headers()
+            message = "Thanks!"
+            self.wfile.write(bytes(message, "utf8"))
+            # Dialback and get a dilelist
+            curllist   = subprocess.run("curl http://"+servername+":"+serverport"/?DropList", shell=True, stdout=subprocess.PIPE)
+            filestoget = curllist.stdout.decode("utf8").split("\n")
+            for currfile in filestoget:
+                # cd to my landing
+                # curl get the files without servername part of path
+        elif self.path=="/?DropList":
+            print("List Recevied from %s" % servername)
+            self.send_header('Content-type','text/plain')
+            self.end_headers()
+            translist = glob.glob(DropRoot+servername+".")
+            self.wfile.write(bytes("\n".join(translist), "utf8"))
+        elif self.path.begins("/?DropDone="):
+            # print("Something is done")
+            whatdone = self.path[8:]
+            print("I think %s is done" % whatdone)
+        else:
+            self.path = '/'+servername+'./'+self.path
+            return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+        return
+
+    # def do_PUT(self):
+    #     path = self.translate_path(self.path)
+    #     if path.endswith('/'):
+    #         self.send_response(405, "Method Not Allowed")
+    #         self.wfile.write("PUT not allowed on a directory\n".encode())
+    #         return
+    #     else:
+    #         try:
+    #             os.makedirs(os.path.dirname(path))
+    #         except FileExistsError: pass
+    #         length = int(self.headers['Content-Length'])
+    #         with open(path, 'wb') as f:
+    #             f.write(self.rfile.read(length))
+    #         self.send_response(201, "Created")
+    #     self.end_headers()
+    #     return
+
+def run_on(port):
+    print("[T]Starting a server on port %i" % port)
+    server_address = ('localhost', port)
+    httpd = HTTPServer(server_address, TransferHandler)
+    httpd.serve_forever()
+
+# ############################################################################## Threaded Copier
+class FileDrop(Thread):
+    def __init__(self, srcfile, callback):
+        Thread.__init__(self)
+        self.callback = callback
+        self.srcfile  = srcfile
+
+    def run(self):
+        print("[T]Seperate Thread to copy %s" % self.srcfile)
+        time.sleep(10)
+        #Serve the file { echo -ne "HTTP/1.0 200 OK\r\nContent-Length: $(wc -c <some.file)\r\n\r\n"; cat some.file; } | nc -l 8080
+        #Notify the client
+
+        # New thinking.
+        ping = subprocess.run("curl "+servername+"/?DropPing", shell=True, stdout=subprocess.PIPE)
+
+        print("[T]Sim copy over")
+        self.callback(self.srcfile)
 
 # ############################################################################## Indicator
 class IndicatorDrop:
     statusIcons = [ "dropicon", "droprecv", "dropsend0", "dropsend1", "dropsend2", "dropsend3", "dropsend4", "dropsend5", "dropsend6", "dropsend7", "dropsend8" ]
     lastpoll    = None
+    filequeue   = []
+    inprogress  = None
 
     def __init__(self):
         self.ind = AppIndicator.Indicator.new("indicator-drop", self.statusIcons[0], AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
@@ -141,6 +225,15 @@ Simple transfers across LAN with avahi
     def handler_menu_exit(self, evt):
         self.exit()
 
+    def pushToQueue(self, item):
+        if item not in self.filequeue:
+            print("Adding %s" % item)
+            self.filequeue.append(item)
+
+    def popovQueue(self, item):
+        if item in self.filequeue:
+            self.filequeue.remove(item)
+
     def fileCheck(self):
         # check for os err on ls
         self.lastpoll=time.time()
@@ -150,18 +243,31 @@ Simple transfers across LAN with avahi
             if fileList.returncode!=0:
                 print("No files found")
             else:
-                print("Must move the following to .staging")
-                print(fileList.stdout)
-                print("Should now copy everything")
+                for queueme in fileList.stdout.split():
+                    # print(queueme)
+                    self.pushToQueue(queueme.decode("utf8"))
         except err:
             print("No files found")
             return True
+
+    def doneCopy(self, srcname):
+        os.remove( srcname )
+        self.popovQueue( srcname )
+        self.inprogress = None
 
     def handler_timeout(self):
         #set icon based on self.mode
         # every x time poll directories
         if (self.lastpoll==None) or ((time.time() - self.lastpoll)>30):
             self.fileCheck()
+
+        if len(self.filequeue)>0:
+            print("My current transfer queue is ")
+            print(self.filequeue)
+            if self.inprogress == None:
+                self.inprogress = self.filequeue[0]
+                FileDrop(self.inprogress, self.doneCopy).run()
+                # copy.run()
 
         if self.mode==Modes.IDLE:
             self.ind.set_icon( self.statusIcons[0] )
@@ -196,11 +302,11 @@ class AvahiListener(object):
  <name replace-wildcards="yes">%%h</name>
   <service>
    <type>_drop-target._tcp</type>
-   <port>58769</port>
+   <port>%d</port>
    <txt-record>path=/home/%s/Drop/</txt-record>
   </service>
 </service-group>
-""" % (DropUser)
+""" % (DropPort, DropUser)
         try:
             servfile = open("/etc/avahi/services/Drop.service", "w")
             print(service, file=servfile)
@@ -248,6 +354,10 @@ if __name__ == "__main__":
         listener.setTarget(ind);   # Allow crosstalk
         # # AVAHI LISTEN
         browser  = ServiceBrowser(zeroconf, "_drop-target._tcp.local.", listener) # find siblings
+        # # HTTPd for file transfers
+        server = Thread(target=run_on, args=DropPort)
+        server.daemon = True # Do not make us wait for you to exit
+        server.start()
         ind.main()
 
     except Exception as e:
