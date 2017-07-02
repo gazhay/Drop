@@ -86,6 +86,9 @@ class TransferHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         (servername, serverport) = self.client_address
+        if not servername.ends(".local."):
+            servername = servername+".local."
+        dserver = servername+":"+serverport
         if self.path=="/?DropPing":
             print("Ping Recevied from %s" % servername)
             # Send headers
@@ -94,22 +97,25 @@ class TransferHandler(BaseHTTPRequestHandler):
             message = "Thanks!"
             self.wfile.write(bytes(message, "utf8"))
             # Dialback and get a dilelist
-            curllist   = subprocess.run("curl http://"+servername+":"+serverport"/?DropList", shell=True, stdout=subprocess.PIPE)
+            curllist   = subprocess.run("curl http://"+dserver+"/?DropList", shell=True, stdout=subprocess.PIPE)
             filestoget = curllist.stdout.decode("utf8").split("\n")
+            # cd to my landing
+            os.chdir(DropLand)
             for currfile in filestoget:
-                # cd to my landing
                 # curl get the files without servername part of path
+                print("Try to get %s", currfile)
         elif self.path=="/?DropList":
             print("List Recevied from %s" % servername)
             self.send_header('Content-type','text/plain')
             self.end_headers()
-            translist = glob.glob(DropRoot+servername+".")
+            translist = glob.glob(DropRoot+servername)
             self.wfile.write(bytes("\n".join(translist), "utf8"))
         elif self.path.begins("/?DropDone="):
             # print("Something is done")
             whatdone = self.path[8:]
             print("I think %s is done" % whatdone)
         else:
+            # If its not an explicit command, then its a file request, so serve it
             self.path = '/'+servername+'./'+self.path
             return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
         return
@@ -149,10 +155,14 @@ class FileDrop(Thread):
         time.sleep(10)
         #Serve the file { echo -ne "HTTP/1.0 200 OK\r\nContent-Length: $(wc -c <some.file)\r\n\r\n"; cat some.file; } | nc -l 8080
         #Notify the client
-
+        # find servername from filename
+        # minus DropRoot, then should be server/file
+        # but might be server/folder/file
+        guessserver = self.srcfile.replace(DropRoot,"")
+        (servername,junk,residualpath) = guessserver.partition("/")
         # New thinking.
-        ping = subprocess.run("curl "+servername+"/?DropPing", shell=True, stdout=subprocess.PIPE)
-
+        ping = subprocess.run("curl "+servername+":"+str(DropPort)+"/?DropPing", shell=True, stdout=subprocess.PIPE)
+        print(ping.stdout.decode("utf8"))
         print("[T]Sim copy over")
         self.callback(self.srcfile)
 
@@ -355,7 +365,7 @@ if __name__ == "__main__":
         # # AVAHI LISTEN
         browser  = ServiceBrowser(zeroconf, "_drop-target._tcp.local.", listener) # find siblings
         # # HTTPd for file transfers
-        server = Thread(target=run_on, args=DropPort)
+        server = Thread(target=run_on, args=[DropPort])
         server.daemon = True # Do not make us wait for you to exit
         server.start()
         ind.main()
