@@ -122,7 +122,7 @@ class TransferHandler(BaseHTTPRequestHandler):
 
 def run_on(port):
     print("[T]Starting a server on port %i" % port)
-    server_address = ('localhost', port)
+    server_address = ('0.0.0.0', port)
     httpd = HTTPServer(server_address, TransferHandler)
     httpd.serve_forever()
 
