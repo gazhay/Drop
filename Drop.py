@@ -86,7 +86,7 @@ class TransferHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         (servername, serverport) = self.client_address
-        if not servername.endsWith(".local."):
+        if not servername.endswith(".local."):
             servername = servername+".local."
         dserver = servername+":"+serverport
         if self.path=="/?DropPing":
