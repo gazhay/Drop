@@ -88,7 +88,8 @@ class TransferHandler(BaseHTTPRequestHandler):
         (servername, serverport) = self.client_address
         if not servername.endswith(".local."):
             servername = servername+".local."
-        dserver = servername+":"+serverport
+        dserver = servername+":"+str(serverport)
+        print("dserver: %s" % dserver)
         if self.path=="/?DropPing":
             print("Ping Recevied from %s" % servername)
             # Send headers
