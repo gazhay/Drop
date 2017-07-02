@@ -86,7 +86,7 @@ class TransferHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         (servername, serverport) = self.client_address
-        if not servername.ends(".local."):
+        if not servername.endsWith(".local."):
             servername = servername+".local."
         dserver = servername+":"+serverport
         if self.path=="/?DropPing":
@@ -119,23 +119,6 @@ class TransferHandler(BaseHTTPRequestHandler):
             self.path = '/'+servername+'./'+self.path
             return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
         return
-
-    # def do_PUT(self):
-    #     path = self.translate_path(self.path)
-    #     if path.endswith('/'):
-    #         self.send_response(405, "Method Not Allowed")
-    #         self.wfile.write("PUT not allowed on a directory\n".encode())
-    #         return
-    #     else:
-    #         try:
-    #             os.makedirs(os.path.dirname(path))
-    #         except FileExistsError: pass
-    #         length = int(self.headers['Content-Length'])
-    #         with open(path, 'wb') as f:
-    #             f.write(self.rfile.read(length))
-    #         self.send_response(201, "Created")
-    #     self.end_headers()
-    #     return
 
 def run_on(port):
     print("[T]Starting a server on port %i" % port)
