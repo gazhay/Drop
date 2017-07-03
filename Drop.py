@@ -165,6 +165,7 @@ class TransferHandler(BaseHTTPRequestHandler):
                 inf = open(DropRoot+self.path[1:])
                 self.wfile.write(inf.read())
                 inf.close()
+                os.remove(DropRoot+self.path[1:])
                 # return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
             # self.flush()
         except Exception as e:
@@ -288,7 +289,7 @@ Simple transfers across LAN with avahi
             self.pushToQueue(afile)
 
     def doneCopy(self, srcname):
-        os.remove( srcname )
+        # os.remove( srcname )
         self.popovQueue( srcname )
         self.inprogress = None
 
