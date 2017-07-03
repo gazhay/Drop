@@ -115,7 +115,7 @@ def get_ip():
 MYIPADDR=get_ip()
 print(" LOCAL IP = %s " % MYIPADDR)
 # ############################################################################## Threaded Web comms
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import http.server 
 
 # HTTPRequestHandler class
 class TransferHandler(BaseHTTPRequestHandler):
