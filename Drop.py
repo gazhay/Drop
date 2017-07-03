@@ -125,6 +125,8 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.wfile.write(bytes(message, "utf8"))
                 # Dialback and get a dilelist
                 curllist   = subprocess.run("curl http://"+dserver+"/?DropList", shell=True, stdout=subprocess.PIPE)
+                print("++++ Raw file list")
+                print(curllist.stdout.decode("utf8"))
                 filestoget = curllist.stdout.decode("utf8").split("\n")
                 # cd to my landing
                 os.chdir(DropLand)
@@ -134,7 +136,7 @@ class TransferHandler(BaseHTTPRequestHandler):
                         print(">>>> Try to get %s" % currfile)
 
             elif self.path=="/?DropList":
-                print("<<<< List Recevied from %s" % dserver)
+                print("<<<< List Requested by %s" % dserver)
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
                 translist = glob.glob(DropRoot+dserver)
