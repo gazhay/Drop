@@ -115,41 +115,46 @@ class TransferHandler(BaseHTTPRequestHandler):
             pass
         dserver = "%s:%d" % (servername,DropPort)
         print("dserver: %s" % dserver)
-        if self.path=="/?DropPing":
-            print("Ping Recevied from %s" % servername)
-            # Send headers
-            self.send_header('Content-type','text/plain')
-            self.end_headers()
-            message = "Thanks!"
-            self.wfile.write(bytes(message, "utf8"))
-            # Dialback and get a dilelist
-            curllist   = subprocess.run("curl http://"+dserver+"/?DropList", shell=True, stdout=subprocess.PIPE)
-            filestoget = curllist.stdout.decode("utf8").split("\n")
-            # cd to my landing
-            os.chdir(DropLand)
-            for currfile in filestoget:
-                # curl get the files without servername part of path
-                if currfile!="":
-                    print("Try to get %s" % currfile)
+        try:
+            if self.path=="/?DropPing":
+                print("<<<< Ping Recevied from %s" % servername)
+                # Send headers
+                self.send_header('Content-type','text/plain')
+                self.end_headers()
+                message = "Thanks!"
+                self.wfile.write(bytes(message, "utf8"))
+                # Dialback and get a dilelist
+                curllist   = subprocess.run("curl http://"+dserver+"/?DropList", shell=True, stdout=subprocess.PIPE)
+                filestoget = curllist.stdout.decode("utf8").split("\n")
+                # cd to my landing
+                os.chdir(DropLand)
+                for currfile in filestoget:
+                    # curl get the files without servername part of path
+                    if currfile!="":
+                        print(">>>> Try to get %s" % currfile)
 
-        elif self.path=="/?DropList":
-            print("List Recevied from %s" % dserver)
-            self.send_header('Content-type','text/plain')
-            self.end_headers()
-            translist = glob.glob(DropRoot+dserver)
-            self.wfile.write(bytes("\n".join(translist), "utf8"))
-        elif self.path.begins("/?DropDone="):
-            # print("Something is done")
-            whatdone = self.path[8:]
-            print("I think %s is done" % whatdone)
-        else:
-            # If its not an explicit command, then its a file request, so serve it
-            self.path = '/'+servername+'./'+self.path
-            return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
-        # self.flush()
-        self.finish()
-        self.connection.close()
-        return
+            elif self.path=="/?DropList":
+                print("<<<< List Recevied from %s" % dserver)
+                self.send_header('Content-type','text/plain')
+                self.end_headers()
+                translist = glob.glob(DropRoot+dserver)
+                self.wfile.write(bytes("\n".join(translist), "utf8"))
+            elif self.path.begins("/?DropDone="):
+                # print("Something is done")
+                whatdone = self.path[8:]
+                print(">>>> I think %s is done" % whatdone)
+            else:
+                # If its not an explicit command, then its a file request, so serve it
+                self.path = '/'+servername+'./'+self.path
+                return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+            # self.flush()
+        except:
+            print("[T]Error")
+            with suppress(Exception):
+                self.finish()
+                self.connection.close()
+        finally:
+            return
 
 def run_on(port):
     print("[T]Starting a server on port %i" % port)
