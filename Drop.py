@@ -81,8 +81,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 # HTTPRequestHandler class
 class TransferHandler(BaseHTTPRequestHandler):
 
-    # # DO NEED PORTS YOU IDIOT!!
-
     def do_GET(self):
         self.send_response(200)
         (servername, serverport) = self.client_address
@@ -97,6 +95,8 @@ class TransferHandler(BaseHTTPRequestHandler):
             self.end_headers()
             message = "Thanks!"
             self.wfile.write(bytes(message, "utf8"))
+            self.finish()
+            self.connection.close()
             # Dialback and get a dilelist
             curllist   = subprocess.run("curl http://"+dserver+"/?DropList", shell=True, stdout=subprocess.PIPE)
             filestoget = curllist.stdout.decode("utf8").split("\n")
@@ -137,11 +137,6 @@ class FileDrop(Thread):
     def run(self):
         print("[T]Seperate Thread to copy %s" % self.srcfile)
         time.sleep(10)
-        #Serve the file { echo -ne "HTTP/1.0 200 OK\r\nContent-Length: $(wc -c <some.file)\r\n\r\n"; cat some.file; } | nc -l 8080
-        #Notify the client
-        # find servername from filename
-        # minus DropRoot, then should be server/file
-        # but might be server/folder/file
         guessserver = self.srcfile.replace(DropRoot,"")
         (servername,junk,residualpath) = guessserver.partition("/")
         # New thinking.
