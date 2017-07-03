@@ -173,7 +173,7 @@ class FileDrop(Thread):
         guessserver = self.srcfile.replace(DropRoot,"")
         (servername,junk,residualpath) = guessserver.partition("/")
         # New thinking.
-        ping = subprocess.run("curl "+servername+":"+str(DropPort)+"/?DropPing", shell=True, stdout=subprocess.PIPE)
+        ping = subprocess.run("curl "+servername+":"+str(DropPort)+"/?DropPing="+self.srcfile, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
         print("[T]Sim copy over")
         self.callback(self.srcfile)
