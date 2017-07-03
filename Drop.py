@@ -122,8 +122,6 @@ class TransferHandler(BaseHTTPRequestHandler):
             self.end_headers()
             message = "Thanks!"
             self.wfile.write(bytes(message, "utf8"))
-            self.finish()
-            self.connection.close()
             # Dialback and get a dilelist
             curllist   = subprocess.run("curl http://"+dserver+"/?DropList", shell=True, stdout=subprocess.PIPE)
             filestoget = curllist.stdout.decode("utf8").split("\n")
@@ -131,12 +129,14 @@ class TransferHandler(BaseHTTPRequestHandler):
             os.chdir(DropLand)
             for currfile in filestoget:
                 # curl get the files without servername part of path
-                print("Try to get %s" % currfile)
+                if currfile!="":
+                    print("Try to get %s" % currfile)
+
         elif self.path=="/?DropList":
-            print("List Recevied from %s" % servername)
+            print("List Recevied from %s" % dserver)
             self.send_header('Content-type','text/plain')
             self.end_headers()
-            translist = glob.glob(DropRoot+servername)
+            translist = glob.glob(DropRoot+dserver)
             self.wfile.write(bytes("\n".join(translist), "utf8"))
         elif self.path.begins("/?DropDone="):
             # print("Something is done")
@@ -146,6 +146,9 @@ class TransferHandler(BaseHTTPRequestHandler):
             # If its not an explicit command, then its a file request, so serve it
             self.path = '/'+servername+'./'+self.path
             return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+        # self.flush()
+        self.finish()
+        self.connection.close()
         return
 
 def run_on(port):
@@ -253,18 +256,21 @@ Simple transfers across LAN with avahi
     def fileCheck(self):
         # check for os err on ls
         self.lastpoll=time.time()
-        try:
-            fileList = subprocess.run("\ls "+DropRoot+"*/*", stdout=subprocess.PIPE, shell=True)
-            # If we haven't thrown an error, there could be files
-            if fileList.returncode!=0:
-                print("No files found")
-            else:
-                for queueme in fileList.stdout.split():
-                    # print(queueme)
-                    self.pushToQueue(queueme.decode("utf8"))
-        except err:
-            print("No files found")
-            return True
+        files = glob.glob(DropRoot+"*/*")
+        for afile in files:
+            self.pushToQueue(afile)
+        # try:
+        #     fileList = subprocess.run("\ls "+DropRoot+"*/*", stdout=subprocess.PIPE, shell=True)
+        #     # If we haven't thrown an error, there could be files
+        #     if fileList.returncode!=0:
+        #         print("No files found")
+        #     else:
+        #         for queueme in fileList.stdout.split():
+        #             # print(queueme)
+        #             self.pushToQueue(queueme.decode("utf8"))
+        # except err:
+        #     print("No files found")
+        #     return True
 
     def doneCopy(self, srcname):
         os.remove( srcname )
