@@ -141,7 +141,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         print("dserver: %s" % dserver)
         print("+++ PATH RECV ++++ %s " % self.path)
         try:
-            if self.path.startswith=="/?DropPing":
+            if self.path.startswith("/?DropPing"):
                 fetchMe = self.path[11:]
                 print("["+MYHOSTNAME+"]"+"<<<< Ping Recevied from %s" % dserver)
                 print("["+MYHOSTNAME+"]"+"<<<< To fetch %s" % fetchMe)
