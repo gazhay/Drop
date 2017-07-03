@@ -169,8 +169,9 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.path = '/'+servername+'/'+self.path
                 return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
             # self.flush()
-        except:
+        except Exception as e:
             print("[T]Error")
+            print(e)
             with suppress(Exception):
                 self.finish()
                 self.connection.close()
