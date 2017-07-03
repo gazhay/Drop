@@ -84,9 +84,11 @@ class TransferHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         (servername, serverport) = self.client_address
-        if not servername.endswith(".local."):
-            servername = servername+".local."
-        dserver = servername+":"+str(serverport)
+        try:
+            servername = socket.gethostbyaddr(servername)
+        except:
+            pass
+        dserver = servername+":"+str(DropPort)
         print("dserver: %s" % dserver)
         if self.path=="/?DropPing":
             print("Ping Recevied from %s" % servername)
@@ -104,7 +106,7 @@ class TransferHandler(BaseHTTPRequestHandler):
             os.chdir(DropLand)
             for currfile in filestoget:
                 # curl get the files without servername part of path
-                print("Try to get %s", currfile)
+                print("Try to get %s" % currfile)
         elif self.path=="/?DropList":
             print("List Recevied from %s" % servername)
             self.send_header('Content-type','text/plain')
