@@ -162,9 +162,9 @@ class TransferHandler(BaseHTTPRequestHandler):
                 inf = open(DropRoot+self.path[1:], "rb")
                 self.end_headers()
                 while True:
-                    bytes = inf.read(8192)
-                    if bytes:
-                        self.wfile.write(bytes)
+                    fbytes = inf.read(8192)
+                    if fbytes:
+                        self.wfile.write(fbytes)
                     else:
                         return
                 inf.close()
