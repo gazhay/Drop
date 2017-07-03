@@ -139,6 +139,7 @@ class TransferHandler(BaseHTTPRequestHandler):
             pass
         dserver = "%s:%d" % (servername,DropPort)
         print("dserver: %s" % dserver)
+        print("+++ PATH RECV ++++ %s " % self.path)
         try:
             if self.path.startswith=="/?DropPing":
                 fetchMe = self.path[11:]
@@ -284,18 +285,6 @@ Simple transfers across LAN with avahi
         files = glob.glob(DropRoot+"*/*")
         for afile in files:
             self.pushToQueue(afile)
-        # try:
-        #     fileList = subprocess.run("\ls "+DropRoot+"*/*", stdout=subprocess.PIPE, shell=True)
-        #     # If we haven't thrown an error, there could be files
-        #     if fileList.returncode!=0:
-        #         print("No files found")
-        #     else:
-        #         for queueme in fileList.stdout.split():
-        #             # print(queueme)
-        #             self.pushToQueue(queueme.decode("utf8"))
-        # except err:
-        #     print("No files found")
-        #     return True
 
     def doneCopy(self, srcname):
         os.remove( srcname )
@@ -343,25 +332,6 @@ class AvahiListener(object):
     info  = None
 
     def __init__(self):
-#         self.Hosts=[]
-#         service = """<?xml version="1.0" standalone='no'?>
-# <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-# <service-group>
-#  <name replace-wildcards="yes">%%h</name>
-#   <service>
-#    <type>_drop-target._tcp</type>
-#    <port>%d</port>
-#    <txt-record>path=/home/%s/Drop/</txt-record>
-#   </service>
-# </service-group>
-# """ % (DropPort, DropUser)
-#         try:
-#             servfile = open("/etc/avahi/services/Drop.service", "w")
-#             print(service, file=servfile)
-#             servfile.close()
-#         except:
-#             print("You are probably running as something other than root")
-#             exit()
         desc = {'path': DropRoot, "realip": MYIPADDR}
 
         self.info = ServiceInfo("_drop-target._tcp.local.",
