@@ -22,16 +22,26 @@ tempsock = "/tmp/drop"
 
 # TODO
 #
+# Directory create and destroy needs work
+# Pretty them dirs
+# Make transfers actually work
+#
+def get_resource_path(rel_path):
+    dir_of_py_file = os.path.dirname(__file__)
+    rel_path_to_resource = os.path.join(dir_of_py_file, rel_path)
+    abs_path_to_resource = os.path.abspath(rel_path_to_resource)
+    return abs_path_to_resource
+
 VERSION   = "0.1a"
-ICONDIR   = "./DropIcons"
+ICONDIR   = get_resource_path("./DropIcons")
 DEVMODE   = True
 GetMyUser = subprocess.run("who | awk '{print $1}'", shell=True, stdout=subprocess.PIPE)
 DropUser  = GetMyUser.stdout.decode("utf8").rstrip()
-print("Local user will be %s" % DropUser)
 DropRoot  = "/home/"+DropUser+"/Drop/"
 DropLand  = DropRoot+"Landed/"
 DropStage = DropRoot+".staging/"
 DropPort  = 58769
+TranPort  = DropPort+1
 
 ## Do our required directories exist?
 
@@ -79,12 +89,6 @@ except:
 def shellquote(s):
     return "'" + s.replace("'", "'\\''") + "'"
 
-def get_resource_path(rel_path):
-    dir_of_py_file = os.path.dirname(__file__)
-    rel_path_to_resource = os.path.join(dir_of_py_file, rel_path)
-    abs_path_to_resource = os.path.abspath(rel_path_to_resource)
-    return abs_path_to_resource
-
 def alert(msg):
     parent = None
     md = Gtk.MessageDialog(parent, 0, Gtk.MessageType.INFO, Gtk.ButtonsType.CLOSE, msg)
@@ -106,7 +110,6 @@ else:
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        # doesn't even have to be reachable
         s.connect(('10.13.13.13', 1))
         IP = s.getsockname()[0]
     except:
@@ -116,49 +119,52 @@ def get_ip():
     return IP
 
 MYIPADDR=get_ip()
-print(" LOCAL IP = %s " % MYIPADDR)
+print("DISCOVERED LOCAL IP = %s " % MYIPADDR)
 # ############################################################################## Threaded Web comms
 from http.server import BaseHTTPRequestHandler, HTTPServer, SimpleHTTPRequestHandler
-import http.client
+import pycurl
 
 # HTTPRequestHandler class
 class TransferHandler(BaseHTTPRequestHandler):
+    def attachind(self, indicator):
+        self.ind = indicator
+        return
+
+    def getfromremote(snp, path, fname):
+        # QUERY PUNTing this to another thread
+        print("[Remote Grab] get %s from %s " % (path,snp))
+        c = pycurl.Curl()
+        c.setopt(c.URL, 'http://'+snp+"/"+path+fname)
+        with open(DropLand+fname, 'w') as f:
+            c.setopt(c.WRITEFUNCTION, f.write)
+            c.setopt(c.PROGRESSFUNCTION, self.ind.transferProgress)
+            c.perform()
+        return
 
     def do_GET(self):
-        # if 'http:' in self.headers.getheaders('referer'):
-        self.send_response(200)
+        # if 'http:' in self.headers.getheaders('referer'): #moducum of security
         (servername, serverport) = self.client_address
-        if servername=="127.0.0.1":
-            print("I AM %s" % MYHOSTNAME)
-        print("[TransferHandler] servername %s" % servername)
+        print("[TransferHandler] servername %s request %s " % (servername, self.path))
         try:
             servername = socket.gethostbyaddr(servername)[0] # return .lan
-            if "." in servername:
+            if "." in servername: # Fudge for local dns
                 splitup = servername.split(".")
                 servername = splitup[0]+".local."
         except:
             pass
-        dserver = "%s:%d" % (servername,DropPort)
-        print("dserver: %s" % dserver)
-        print("+++ PATH RECV ++++ %s " % self.path)
         try:
             if self.path.startswith("/?DropPing"):
+                self.send_response(200)
                 fetchMe = self.path[11:]
-                print("["+MYHOSTNAME+"]"+"<<<< Ping Recevied from %s" % dserver)
-                print("["+MYHOSTNAME+"]"+"<<<< To fetch %s" % fetchMe)
-                # Send headers
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
                 message = "Thanks!"
                 self.wfile.write(bytes(message, "utf8"))
                 self.finish()
                 self.connection.close()
-                # Dialback and get a dilelist
-                print("["+MYHOSTNAME+"]"+">>>>%s<<<<" % cmd)
-                h=http.client.HTTPConnection(dserver)
-                h.request('PUT', MYHOSTNAME+'.local./'+fetchMe, open(DropLand+fetchMe, 'rb'))
-                print(h.getresponse().read())
+                self.getFromRemote("%s:%d" % (servername,TranPort), MYHOSTNAME, fetchMe)
             else:
+                self.send_response(404)
                 self.end_headers()
                 return
             # self.flush()
@@ -171,24 +177,16 @@ class TransferHandler(BaseHTTPRequestHandler):
         finally:
             return
 
-    def do_PUT(self):
-        path = self.translate_path(self.path)
-        if path.endswith('/'):
-            self.send_response(405, "Method Not Allowed")
-            self.wfile.write("PUT not allowed on a directory\n".encode())
-            return
-        else:
-            print("I want to create %s "+path)
-            length = int(self.headers['Content-Length'])
-            # with open(path, 'wb') as f:
-            #     f.write(self.rfile.read(length))
-            self.send_response(201, "Created")
-        pass
-
-def run_on(port):
-    print("["+MYHOSTNAME+"]"+"[T]Starting a server on port %i" % port)
+def run_on(port, chdir=None, indic=None):
     server_address = ('0.0.0.0', port)
-    httpd = HTTPServer(server_address, TransferHandler)
+    if not chdir==None:
+        os.chdir(chdir)
+        httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
+    else:
+        httpd = HTTPServer(server_address, TransferHandler)
+        if not indic==None:
+            httpd.attachind(indic)
+    print("["+MYHOSTNAME+"]"+"[T]Starting a server on port %i" % port)
     httpd.serve_forever()
 
 # ############################################################################## Threaded Copier
@@ -200,7 +198,6 @@ class FileDrop(Thread):
 
     def run(self):
         print("["+MYHOSTNAME+"]"+"[T]Seperate Thread to copy %s" % self.srcfile)
-        time.sleep(10)
         guessserver = self.srcfile.replace(DropRoot,"")
         (servername,junk,residualpath) = guessserver.partition("/")
         # New thinking.
@@ -220,7 +217,7 @@ class IndicatorDrop:
 
     def __init__(self):
         self.ind = AppIndicator.Indicator.new("indicator-drop", self.statusIcons[0], AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
-        self.ind.set_icon_theme_path( get_resource_path(ICONDIR) )
+        self.ind.set_icon_theme_path( ICONDIR )
         self.ind.set_icon( self.statusIcons[0] )
         self.ind.set_status (AppIndicator.IndicatorStatus.ACTIVE)
         self.mode = Modes.IDLE
@@ -269,7 +266,7 @@ class IndicatorDrop:
 Simple transfers across LAN with avahi
         """)
         dlg.set_authors(['Gareth Hay'])
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(get_resource_path(ICONDIR)+"/"+self.statusIcons[0]+".png" , 100, 100)
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(ICONDIR+"/"+self.statusIcons[0]+".png" , 100, 100)
         dlg.set_logo(pixbuf)
         dlg.show()
 
@@ -301,6 +298,15 @@ Simple transfers across LAN with avahi
         self.popovQueue( srcname )
         self.inprogress = None
 
+    def transferProgress(self, total_to_download, total_downloaded, total_to_upload, total_uploaded):
+      if total_to_download:
+        percent_completed = float(total_downloaded)/total_to_download       # You are calculating amount uploaded
+        rate = round(percent_completed * 100, ndigits=2)                # Convert the completed fraction to percentage
+        completed = "#" * int(rate)                                     # Calculate completed percentage
+        spaces = " " * ( 100 - completed)                               # Calculate remaining completed rate
+        sys.stdout.write('[%s%s] %s%%' %(completed, spaces, rate))      # the pretty progress [####     ] 34%
+        sys.stdout.flush()
+
     def handler_timeout(self):
         #set icon based on self.mode
         # every x time poll directories
@@ -327,6 +333,9 @@ Simple transfers across LAN with avahi
             self.ind.set_icon( self.statusIcons[1] )
 
         return True
+
+    def attachControl(self, cHttp):
+        self.control = cHttp
 
     def main(self):
         #  attempt multiprocess shenanigans
@@ -408,20 +417,25 @@ if __name__ == "__main__":
         # # AVAHI LISTEN
         browser  = ServiceBrowser(zeroconf, "_drop-target._tcp.local.", listener) # find siblings
         # # HTTPd for file transfers
-        server = Thread(target=run_on, args=[DropPort])
+        control = Thread(target=run_on, args=[DropPort])
+        control.daemon = True # Do not make us wait for you to exit
+        control.start()
+        server = Thread(target=run_on, args=[TranPort,DropRoot, ind])
         server.daemon = True # Do not make us wait for you to exit
         server.start()
         ind.main()
+
     except KeyboardInterrupt:
         with suppress(Exception):
-          listener.unpublish()
-          ind.exit()
-          exit()
+            print("Going down...")
+            listener.unpublish()
+            ind.exit()
+            quit()
     except Exception as e:
         print(e)
-        ind.exit()
     finally:
         with suppress(Exception):
           listener.unpublish()
           ind.exit()
         print("Bye.")
+        quit()
