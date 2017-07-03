@@ -167,7 +167,8 @@ class TransferHandler(BaseHTTPRequestHandler):
             else:
                 # If its not an explicit command, then its a file request, so serve it
                 self.path = '/'+servername+'/'+self.path
-                return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+                print("[OVERRIDE] sending to %s" % self.path)
+                return HTTPServer.HTTPRequestHandler.do_GET(self)
             # self.flush()
         except Exception as e:
             print("[T]Error")
