@@ -158,15 +158,15 @@ class TransferHandler(BaseHTTPRequestHandler):
                 curllist   = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
                 print(curllist.stdout.decode("utf8"))
             else:
-                # If its not an explicit command, then its a file request, so serve it
-                # self.path = '/'+servername+'/'+self.path
-                # servern name is .lan
-                print("["+MYHOSTNAME+"]"+"[OVERRIDE] sending to "+DropRoot+servername+"/"+self.path)
+                print("["+MYHOSTNAME+"]"+"[OVERRIDE] sending "+DropRoot+servername+"/"+self.path)
                 inf = open(DropRoot+self.path[1:], "rb")
                 self.wfile.write(inf.read())
                 inf.close()
                 os.remove(DropRoot+self.path[1:])
-                # return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+                self.finish()
+                self.connection.close()
+                print("DONE")
+                return
             # self.flush()
         except Exception as e:
             print("["+MYHOSTNAME+"]"+"[T]Error")
