@@ -137,7 +137,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         dserver = "%s:%d" % (servername,DropPort)
         print("dserver: %s" % dserver)
         try:
-            if self.path.begins=="/?DropPing":
+            if self.path.beginswith=="/?DropPing":
                 fetchMe = self.path[11:]
                 print("<<<< Ping Recevied from %s" % dserver)
                 print("<<<< To fetch %s" % fetchMe)
