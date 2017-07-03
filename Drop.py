@@ -109,10 +109,11 @@ class TransferHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         (servername, serverport) = self.client_address
+        print("[TransferHandler] servername %s" % servername)
         try:
             servername = socket.gethostbyaddr(servername)[0] # return .lan
-            if not servername.endswith("local."):
-                servername = servername+".local."
+            # if not servername.endswith("local."):
+            #     servername = servername+".local."
         except:
             pass
         dserver = "%s:%d" % (servername,DropPort)
@@ -173,7 +174,7 @@ class FileDrop(Thread):
         guessserver = self.srcfile.replace(DropRoot,"")
         (servername,junk,residualpath) = guessserver.partition("/")
         # New thinking.
-        ping = subprocess.run("curl "+servername+":"+str(DropPort)+"/?DropPing="+self.srcfile, shell=True, stdout=subprocess.PIPE)
+        ping = subprocess.run("curl "+guessserver+":"+str(DropPort)+"/?DropPing="+residualpath, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
         print("[T]Sim copy over")
         self.callback(self.srcfile)
