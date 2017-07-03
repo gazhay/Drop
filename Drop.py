@@ -88,7 +88,7 @@ class TransferHandler(BaseHTTPRequestHandler):
             servername = socket.gethostbyaddr(servername)
         except:
             pass
-        dserver = servername+":"+str(DropPort)
+        dserver = "%s:%d" % (servername+,str(DropPort))
         print("dserver: %s" % dserver)
         if self.path=="/?DropPing":
             print("Ping Recevied from %s" % servername)
@@ -306,6 +306,16 @@ class AvahiListener(object):
             print("You are probably running as something other than root")
             exit()
 
+    def cleanUpDir(self, dirname):
+        try:
+            os.remove(DropRoot+dirname)
+            return True
+        except:
+            return False
+
+    def cleanAll(self):
+        for host in self.Hosts:
+            self.cleanUpDir(host.get("name"))
 
     def remove_service(self, zeroconf, type, name):
         for host in self.Hosts:
@@ -313,7 +323,7 @@ class AvahiListener(object):
                 info = host
 
         print("Removing %s" % info['info'].server)
-        os.remove(DropRoot+info['info'].server)
+        self.cleanUpDir(info['info'].server)
         self.Hosts.remove(info)
 
     def add_service(self, zeroconf, type, name):
@@ -333,6 +343,7 @@ class AvahiListener(object):
 
     def unpublish(self):
         os.remove("/etc/avahi/services/Drop.service")
+        self.cleanAll()
 
 # ############################################################################## Main
 
