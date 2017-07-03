@@ -95,6 +95,7 @@ class Modes:
     RECV = 3
 
 MYHOSTNAME=""
+MYIPADDR=socket.gethostbyname(socket.getfqdn())
 if socket.gethostname().find('.')>=0:
     MYHOSTNAME=socket.gethostname()
 else:
@@ -107,8 +108,12 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 class TransferHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
+        # if 'http:' in self.headers.getheaders('referer'):
         self.send_response(200)
         (servername, serverport) = self.client_address
+        if servername=="127.0.0.1":
+            print("I AM %s" % MYHOSTNAME)
+            print(self.path)
         print("[TransferHandler] servername %s" % servername)
         try:
             servername = socket.gethostbyaddr(servername)[0] # return .lan
@@ -128,8 +133,12 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 message = "Thanks!"
                 self.wfile.write(bytes(message, "utf8"))
+                self.finish()
+                self.connection.close()
                 # Dialback and get a dilelist
-                curllist   = subprocess.run("curl http://"+dserver+"/"+MYHOSTNAME+".local. -o "+DropLand+fetchMe, shell=True, stdout=subprocess.PIPE)
+                cmd="curl http://"+dserver+"/"+MYHOSTNAME+".local. -o "+DropLand+fetchMe
+                print(">>>>%s<<<<" % cmd)
+                curllist   = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
                 print(curllist.stdout.decode("utf8"))
 
             # elif self.path=="/?DropList":
@@ -174,7 +183,9 @@ class FileDrop(Thread):
         guessserver = self.srcfile.replace(DropRoot,"")
         (servername,junk,residualpath) = guessserver.partition("/")
         # New thinking.
-        ping = subprocess.run("curl "+guessserver+":"+str(DropPort)+"/?DropPing="+residualpath, shell=True, stdout=subprocess.PIPE)
+        cmd = "curl http://"+servername+":"+str(DropPort)+"/?DropPing="+residualpath
+        print(">>>>%s<<<<" % cmd)
+        ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
         print("[T]Sim copy over")
         self.callback(self.srcfile)
@@ -344,8 +355,8 @@ class AvahiListener(object):
         desc = {'path': DropRoot}
 
         self.info = ServiceInfo("_drop-target._tcp.local.",
-                           "_drop-target._tcp.local.",
-                           socket.inet_aton("0.0.0.0"), DropPort, 0, 0,
+                           "_"+MYHOSTNAME+"._drop-target._tcp.local.",
+                           socket.inet_aton(MYIPADDR), DropPort, 0, 0,
                            desc, MYHOSTNAME+".local.")
 
     def cleanUpDir(self, dirname):
