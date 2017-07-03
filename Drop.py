@@ -153,7 +153,7 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.finish()
                 self.connection.close()
                 # Dialback and get a dilelist
-                cmd="curl http://"+dserver+"/"+MYHOSTNAME+".local. -o "+DropLand+fetchMe
+                cmd="curl http://"+dserver+"/"+MYHOSTNAME+".local./"+fetchMe+" -o "+DropLand+fetchMe
                 print("["+MYHOSTNAME+"]"+">>>>%s<<<<" % cmd)
                 curllist   = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
                 print(curllist.stdout.decode("utf8"))
