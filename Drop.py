@@ -162,7 +162,7 @@ class TransferHandler(BaseHTTPRequestHandler):
                 # self.path = '/'+servername+'/'+self.path
                 # servern name is .lan
                 print("["+MYHOSTNAME+"]"+"[OVERRIDE] sending to "+DropRoot+servername+"/"+self.path)
-                inf = open(DropRoot+servername+"/"+self.path)
+                inf = open(DropRoot+servername+self.path)
                 self.wfile.write(inf.read())
                 inf.close()
                 # return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
