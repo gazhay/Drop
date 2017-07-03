@@ -115,7 +115,7 @@ def get_ip():
 MYIPADDR=get_ip()
 print(" LOCAL IP = %s " % MYIPADDR)
 # ############################################################################## Threaded Web comms
-import http.server 
+import http.server import BaseHTTPRequestHandler, HTTPServer, SimpleHTTPRequestHandler
 
 # HTTPRequestHandler class
 class TransferHandler(BaseHTTPRequestHandler):
@@ -171,7 +171,7 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.path = '/'+servername+self.path
                 print("[OVERRIDE] sending to %s" % self.path)
                 # return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
-                return http.server.SimpleHTTPRequestHandler.do_GET(self)
+                return SimpleHTTPRequestHandler.do_GET(self)
             # self.flush()
         except Exception as e:
             print("[T]Error")
