@@ -126,12 +126,12 @@ class TransferHandler(BaseHTTPRequestHandler):
         (servername, serverport) = self.client_address
         if servername=="127.0.0.1":
             print("I AM %s" % MYHOSTNAME)
-            print(self.path)
         print("[TransferHandler] servername %s" % servername)
         try:
             servername = socket.gethostbyaddr(servername)[0] # return .lan
-            # if not servername.endswith("local."):
-            #     servername = servername+".local."
+            if "." in servername:
+                splitup = servername.split(".")
+                servername = splitup[0]+".local."
         except:
             pass
         dserver = "%s:%d" % (servername,DropPort)
@@ -168,10 +168,10 @@ class TransferHandler(BaseHTTPRequestHandler):
                 # If its not an explicit command, then its a file request, so serve it
                 # self.path = '/'+servername+'/'+self.path
                 # servern name is .lan
-                self.path = '/'+servername+self.path
-                print("[OVERRIDE] sending to %s" % self.path)
+                print("[OVERRIDE] sending to "+DropRoot+servername+"/"+self.path[10:])
+                inf = open(DropRoot+servername+"/"+self.path[10:])
+                self.wfile.write(inf.read())
                 # return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
-                return SimpleHTTPRequestHandler.do_GET(self)
             # self.flush()
         except Exception as e:
             print("[T]Error")
