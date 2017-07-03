@@ -113,7 +113,7 @@ class TransferHandler(BaseHTTPRequestHandler):
             servername = socket.gethostbyaddr(servername)
         except:
             pass
-        dserver = "%s:%d" % (servername,str(DropPort))
+        dserver = "%s:%d" % (servername,DropPort)
         print("dserver: %s" % dserver)
         if self.path=="/?DropPing":
             print("Ping Recevied from %s" % servername)
