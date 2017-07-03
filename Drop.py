@@ -95,12 +95,25 @@ class Modes:
     RECV = 3
 
 MYHOSTNAME=""
-MYIPADDR=socket.gethostbyname(socket.getfqdn())
 if socket.gethostname().find('.')>=0:
     MYHOSTNAME=socket.gethostname()
 else:
     MYHOSTNAME=socket.gethostbyaddr(socket.gethostname())[0]
 
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.13.13.13', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
+
+MYIPADDR=get_ip()
+print(" LOCAL IP = %s " % MYIPADDR)
 # ############################################################################## Threaded Web comms
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -352,7 +365,7 @@ class AvahiListener(object):
 #         except:
 #             print("You are probably running as something other than root")
 #             exit()
-        desc = {'path': DropRoot}
+        desc = {'path': DropRoot, "realip": MYIPADDR}
 
         self.info = ServiceInfo("_drop-target._tcp.local.",
                            "_"+MYHOSTNAME+"._drop-target._tcp.local.",
