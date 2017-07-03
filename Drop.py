@@ -113,7 +113,7 @@ class TransferHandler(BaseHTTPRequestHandler):
             servername = socket.gethostbyaddr(servername)
         except:
             pass
-        dserver = "%s:%d".format(servername,str(DropPort))
+        dserver = "%s:%d" % (servername,str(DropPort))
         print("dserver: %s" % dserver)
         if self.path=="/?DropPing":
             print("Ping Recevied from %s" % servername)
@@ -340,6 +340,7 @@ class AvahiListener(object):
 
     def cleanAll(self):
         for host in self.Hosts:
+            print("Remove %s" % host.get("name"))
             self.cleanUpDir(host.get("name"))
 
     def remove_service(self, zeroconf, type, name):
@@ -389,10 +390,7 @@ if __name__ == "__main__":
 
     except Exception as e:
         print(e)
-        with suppress(Exception):
-          listener.unpublish()
-          ind.exit()
-        exit()
+        ind.exit()
     finally:
         with suppress(Exception):
           listener.unpublish()
