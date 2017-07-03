@@ -161,9 +161,10 @@ class TransferHandler(BaseHTTPRequestHandler):
                 # If its not an explicit command, then its a file request, so serve it
                 # self.path = '/'+servername+'/'+self.path
                 # servern name is .lan
-                print("["+MYHOSTNAME+"]"+"[OVERRIDE] sending to "+DropRoot+servername+"/"+self.path[10:])
-                inf = open(DropRoot+servername+"/"+self.path[11:])
+                print("["+MYHOSTNAME+"]"+"[OVERRIDE] sending to "+DropRoot+servername+"/"+self.path)
+                inf = open(DropRoot+servername+"/"+self.path)
                 self.wfile.write(inf.read())
+                inf.close()
                 # return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
             # self.flush()
         except Exception as e:
