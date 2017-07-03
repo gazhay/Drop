@@ -61,7 +61,10 @@ DropPort  = 58769
 # folder.set_attributes_from_info(info, 0, None)
 
 def makeUserFolder(folderName):
-    os.mkdir(folderName, 0o0755)
+    try:
+        os.mkdir(folderName, 0o0755)
+    except:
+        pass
     shutil.chown(folderName, user=DropUser, group=DropUser)
 
 try:
@@ -153,23 +156,12 @@ class TransferHandler(BaseHTTPRequestHandler):
                 print(">>>>%s<<<<" % cmd)
                 curllist   = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
                 print(curllist.stdout.decode("utf8"))
-
-            # elif self.path=="/?DropList":
-            #     print("<<<< List Requested by %s" % dserver)
-            #     self.send_header('Content-type','text/plain')
-            #     self.end_headers()
-            #     translist = glob.glob(DropRoot+dserver)
-            #     self.wfile.write(bytes("\n".join(translist), "utf8"))
-            # elif self.path.begins("/?DropDone="):
-            #     # print("Something is done")
-            #     whatdone = self.path[8:]
-            #     print(">>>> I think %s is done" % whatdone)
             else:
                 # If its not an explicit command, then its a file request, so serve it
                 # self.path = '/'+servername+'/'+self.path
                 # servern name is .lan
                 print("[OVERRIDE] sending to "+DropRoot+servername+"/"+self.path[10:])
-                inf = open(DropRoot+servername+"/"+self.path[10:])
+                inf = open(DropRoot+servername+"/"+self.path[11:])
                 self.wfile.write(inf.read())
                 # return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
             # self.flush()
