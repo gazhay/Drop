@@ -119,6 +119,7 @@ MYIPADDR=get_ip()
 print(" LOCAL IP = %s " % MYIPADDR)
 # ############################################################################## Threaded Web comms
 from http.server import BaseHTTPRequestHandler, HTTPServer, SimpleHTTPRequestHandler
+import http.client
 
 # HTTPRequestHandler class
 class TransferHandler(BaseHTTPRequestHandler):
@@ -153,25 +154,12 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.finish()
                 self.connection.close()
                 # Dialback and get a dilelist
-                cmd="curl http://"+dserver+"/"+MYHOSTNAME+".local./"+fetchMe+" -o "+DropLand+fetchMe
                 print("["+MYHOSTNAME+"]"+">>>>%s<<<<" % cmd)
-                curllist   = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
-                print(curllist.stdout.decode("utf8"))
+                h=http.client.HTTPConnection(dserver)
+                h.request('PUT', MYHOSTNAME+'.local./'+fetchMe, open(DropLand+fetchMe, 'rb'))
+                print(h.getresponse().read())
             else:
-                print("["+MYHOSTNAME+"]"+"[SERVING] sending "+DropRoot+self.path[1:])
-                inf = open(DropRoot+self.path[1:], "rb")
                 self.end_headers()
-                while True:
-                    fbytes = inf.read(8192)
-                    if fbytes:
-                        self.wfile.write(fbytes)
-                    else:
-                        return
-                inf.close()
-                os.remove(DropRoot+self.path[1:])
-                self.finish()
-                self.connection.close()
-                print("DONE")
                 return
             # self.flush()
         except Exception as e:
@@ -182,6 +170,20 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.connection.close()
         finally:
             return
+
+    def do_PUT(self):
+        path = self.translate_path(self.path)
+        if path.endswith('/'):
+            self.send_response(405, "Method Not Allowed")
+            self.wfile.write("PUT not allowed on a directory\n".encode())
+            return
+        else:
+            print("I want to create %s "+path)
+            length = int(self.headers['Content-Length'])
+            # with open(path, 'wb') as f:
+            #     f.write(self.rfile.read(length))
+            self.send_response(201, "Created")
+        pass
 
 def run_on(port):
     print("["+MYHOSTNAME+"]"+"[T]Starting a server on port %i" % port)
