@@ -166,9 +166,12 @@ class TransferHandler(BaseHTTPRequestHandler):
             #     print(">>>> I think %s is done" % whatdone)
             else:
                 # If its not an explicit command, then its a file request, so serve it
-                self.path = '/'+servername+'/'+self.path
+                # self.path = '/'+servername+'/'+self.path
+                # servern name is .lan
+                self.path = '/'+servername+self.path
                 print("[OVERRIDE] sending to %s" % self.path)
-                return HTTPServer.HTTPRequestHandler.do_GET(self)
+                # return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+                return http.server.SimpleHTTPRequestHandler.do_GET(self)
             # self.flush()
         except Exception as e:
             print("[T]Error")
