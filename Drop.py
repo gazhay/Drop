@@ -110,7 +110,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         (servername, serverport) = self.client_address
         try:
-            servername = socket.gethostbyaddr(servername)
+            servername = socket.gethostbyaddr(servername)[0]
         except:
             pass
         dserver = "%s:%d" % (servername,DropPort)
