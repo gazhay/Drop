@@ -142,8 +142,8 @@ class TransferHandler(BaseHTTPRequestHandler):
         try:
             if self.path.startswith=="/?DropPing":
                 fetchMe = self.path[11:]
-                print("<<<< Ping Recevied from %s" % dserver)
-                print("<<<< To fetch %s" % fetchMe)
+                print("["+MYHOSTNAME+"]"+"<<<< Ping Recevied from %s" % dserver)
+                print("["+MYHOSTNAME+"]"+"<<<< To fetch %s" % fetchMe)
                 # Send headers
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
@@ -153,20 +153,20 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.connection.close()
                 # Dialback and get a dilelist
                 cmd="curl http://"+dserver+"/"+MYHOSTNAME+".local. -o "+DropLand+fetchMe
-                print(">>>>%s<<<<" % cmd)
+                print("["+MYHOSTNAME+"]"+">>>>%s<<<<" % cmd)
                 curllist   = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
                 print(curllist.stdout.decode("utf8"))
             else:
                 # If its not an explicit command, then its a file request, so serve it
                 # self.path = '/'+servername+'/'+self.path
                 # servern name is .lan
-                print("[OVERRIDE] sending to "+DropRoot+servername+"/"+self.path[10:])
+                print("["+MYHOSTNAME+"]"+"[OVERRIDE] sending to "+DropRoot+servername+"/"+self.path[10:])
                 inf = open(DropRoot+servername+"/"+self.path[11:])
                 self.wfile.write(inf.read())
                 # return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
             # self.flush()
         except Exception as e:
-            print("[T]Error")
+            print("["+MYHOSTNAME+"]"+"[T]Error")
             print(e)
             with suppress(Exception):
                 self.finish()
@@ -175,7 +175,7 @@ class TransferHandler(BaseHTTPRequestHandler):
             return
 
 def run_on(port):
-    print("[T]Starting a server on port %i" % port)
+    print("["+MYHOSTNAME+"]"+"[T]Starting a server on port %i" % port)
     server_address = ('0.0.0.0', port)
     httpd = HTTPServer(server_address, TransferHandler)
     httpd.serve_forever()
@@ -188,7 +188,7 @@ class FileDrop(Thread):
         self.srcfile  = srcfile
 
     def run(self):
-        print("[T]Seperate Thread to copy %s" % self.srcfile)
+        print("["+MYHOSTNAME+"]"+"[T]Seperate Thread to copy %s" % self.srcfile)
         time.sleep(10)
         guessserver = self.srcfile.replace(DropRoot,"")
         (servername,junk,residualpath) = guessserver.partition("/")
