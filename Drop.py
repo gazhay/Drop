@@ -158,9 +158,15 @@ class TransferHandler(BaseHTTPRequestHandler):
                 curllist   = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
                 print(curllist.stdout.decode("utf8"))
             else:
-                print("["+MYHOSTNAME+"]"+"[OVERRIDE] sending "+DropRoot+servername+"/"+self.path)
+                print("["+MYHOSTNAME+"]"+"[SERVING] sending "+DropRoot+self.path[1:])
                 inf = open(DropRoot+self.path[1:], "rb")
-                self.wfile.write(inf.read())
+                self.end_headers()
+                while True:
+                    bytes = inf.read(8192)
+                    if bytes:
+                        self.wfile.write(bytes)
+                    else:
+                        return
                 inf.close()
                 os.remove(DropRoot+self.path[1:])
                 self.finish()
