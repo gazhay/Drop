@@ -14,7 +14,7 @@ import re,subprocess,socket
 import shutil, glob
 import urllib.parse,time,os,signal,sys
 from random import randint
-from zeroconf import ServiceBrowser, Zeroconf
+from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo
 from contextlib import suppress
 from threading import Thread
 
@@ -322,27 +322,34 @@ Simple transfers across LAN with avahi
 class AvahiListener(object):
     target = ""
     Hosts = None
+    info  = None
 
     def __init__(self):
-        self.Hosts=[]
-        service = """<?xml version="1.0" standalone='no'?>
-<!DOCTYPE service-group SYSTEM "avahi-service.dtd">
-<service-group>
- <name replace-wildcards="yes">%%h</name>
-  <service>
-   <type>_drop-target._tcp</type>
-   <port>%d</port>
-   <txt-record>path=/home/%s/Drop/</txt-record>
-  </service>
-</service-group>
-""" % (DropPort, DropUser)
-        try:
-            servfile = open("/etc/avahi/services/Drop.service", "w")
-            print(service, file=servfile)
-            servfile.close()
-        except:
-            print("You are probably running as something other than root")
-            exit()
+#         self.Hosts=[]
+#         service = """<?xml version="1.0" standalone='no'?>
+# <!DOCTYPE service-group SYSTEM "avahi-service.dtd">
+# <service-group>
+#  <name replace-wildcards="yes">%%h</name>
+#   <service>
+#    <type>_drop-target._tcp</type>
+#    <port>%d</port>
+#    <txt-record>path=/home/%s/Drop/</txt-record>
+#   </service>
+# </service-group>
+# """ % (DropPort, DropUser)
+#         try:
+#             servfile = open("/etc/avahi/services/Drop.service", "w")
+#             print(service, file=servfile)
+#             servfile.close()
+#         except:
+#             print("You are probably running as something other than root")
+#             exit()
+        desc = {'path': DropRoot}
+
+        self.info = ServiceInfo("_drop-target._tcp.local.",
+                           "_drop-target._tcp.local.",
+                           socket.inet_aton("0.0.0.0"), DropPort, 0, 0,
+                           desc, MYHOSTNAME+".local.")
 
     def cleanUpDir(self, dirname):
         try:
@@ -380,9 +387,15 @@ class AvahiListener(object):
     def setTarget(self, targetobj):
         self.target = targetobj
 
+    def setZC(self, targetZC):
+        self.zc = targetZC
+        self.zc.register_service(self.info)
+
     def unpublish(self):
-        os.remove("/etc/avahi/services/Drop.service")
         self.cleanAll()
+        self.zc.unregister_service(info)
+        self.zc.close()
+        # os.remove("/etc/avahi/services/Drop.service")
 
 # ############################################################################## Main
 
@@ -393,6 +406,7 @@ if __name__ == "__main__":
         zeroconf = Zeroconf()
         listener = AvahiListener() # Should publish me
         listener.setTarget(ind);   # Allow crosstalk
+        listener.setZC(zeroconf)
         # # AVAHI LISTEN
         browser  = ServiceBrowser(zeroconf, "_drop-target._tcp.local.", listener) # find siblings
         # # HTTPd for file transfers
@@ -400,7 +414,11 @@ if __name__ == "__main__":
         server.daemon = True # Do not make us wait for you to exit
         server.start()
         ind.main()
-
+    except KeyboardInterrupt:
+        with suppress(Exception):
+          listener.unpublish()
+          ind.exit()
+          exit()
     except Exception as e:
         print(e)
         ind.exit()
