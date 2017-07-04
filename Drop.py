@@ -187,10 +187,9 @@ def run_on(port, chdir=None, indic=None):
         os.chdir(chdir)
         httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
     else:
-        httpd = HTTPServer(server_address, TransferHandler)
-        if not indic==None:
-            httpd.attachind(indic)
-            print("Tried to attach indicator")
+        customTransfer = TransferHandler()
+        customTransfer.attachind(indic)
+        httpd = HTTPServer(server_address, customTransfer)
     print("["+MYHOSTNAME+"]"+"[T]Starting a server on port %i" % port)
     httpd.serve_forever()
 
