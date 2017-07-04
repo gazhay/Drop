@@ -384,7 +384,8 @@ class AvahiListener(object):
         try:
             os.remove(DropRoot+dirname)
             return True
-        except:
+        except as e:
+            print(e)
             return False
 
     def cleanAll(self):
