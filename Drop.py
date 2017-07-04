@@ -405,7 +405,7 @@ class AvahiListener(object):
             print("Removing %s" % info['info'].server)
             self.cleanUpDir(info['info'].server)
             self.Hosts.remove(info)
-            mainAppInd.Hosts.remove(info['info'].server)
+            mainAppInd.Hosts.remove(host.get("name"))
 
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
@@ -419,7 +419,7 @@ class AvahiListener(object):
             # os.mkdir(newServ, 0o0755)
             # shutil.chown(newServ, user=DropUser, group=DropUser)
             self.Hosts.append({"name": name, "info": info})
-            mainAppInd.Hosts.append(name)
+            mainAppInd.Hosts.append(info)
         print("new server %s " % (info.server))
 
     def setTarget(self, targetobj):
