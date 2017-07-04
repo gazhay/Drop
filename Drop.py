@@ -197,6 +197,7 @@ class FileDrop(Thread):
         print("["+MYHOSTNAME+"]"+"[T]Seperate Thread to copy %s" % self.srcfile)
         guessserver = self.srcfile.replace(DropRoot,"")
         (servername,junk,residualpath) = guessserver.partition("/")
+        print("{%s} |%s|", servername, residualpath)
         # New thinking.
         cmd = "curl http://"+servername+":"+str(DropPort)+"/?DropPing="+residualpath
         print(">>>>%s<<<<" % cmd)
