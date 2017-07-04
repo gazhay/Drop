@@ -13,7 +13,6 @@ except:
 import re,subprocess,socket
 import shutil, glob
 import urllib.parse,time,os,signal,sys
-from random import randint
 from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo
 from contextlib import suppress
 from threading import Thread
@@ -130,7 +129,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         self.ind = indicator
         return
 
-    def getfromremote(snp, path, fname):
+    def getFromRemote(snp, path, fname):
         # QUERY PUNTing this to another thread
         print("[Remote Grab] get %s from %s " % (path,snp))
         c = pycurl.Curl()
