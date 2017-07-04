@@ -131,7 +131,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         print("[Remote Grab] get %s from %s " % (path,snp))
         c = pycurl.Curl()
         c.setopt(c.URL, 'http://'+snp+"/"+path+fname)
-        with open(DropLand+fname, 'w') as f:
+        with open(DropLand+fname, 'wb') as f:
             c.setopt(c.WRITEFUNCTION, f.write)
             c.setopt(c.PROGRESSFUNCTION, mainAppInd.transferProgress)
             c.perform()
