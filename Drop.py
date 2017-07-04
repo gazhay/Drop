@@ -213,6 +213,7 @@ class IndicatorDrop:
     inprogress  = None
     arrivals    = False
     Hosts       = []
+    Hostcheck   = None
 
     def __init__(self):
         self.ind = AppIndicator.Indicator.new("indicator-drop", self.statusIcons[0], AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
@@ -324,7 +325,7 @@ Simple transfers across LAN with avahi
     def handler_timeout(self):
         #set icon based on self.mode
         # every x time poll directories
-        print(self.Hosts)
+        # print(self.Hosts)
         try:
             if (self.lastpoll==None) or ((time.time() - self.lastpoll)>polldelay):
                 self.fileCheck()
@@ -349,6 +350,10 @@ Simple transfers across LAN with avahi
                 # ANimate this
                 self.ind.set_icon( self.statusIcons[1] )
 
+            if self.Hosts != self.Hostcheck:
+                pass
+                # Update the "Send to" submenu here
+            self.Hostcheck = self.Hosts
             return True
         except KeyboardInterrupt:
             return False
