@@ -384,7 +384,7 @@ class AvahiListener(object):
         try:
             os.remove(DropRoot+dirname)
             return True
-        except as e:
+        except Exception as e:
             print(e)
             return False
 
