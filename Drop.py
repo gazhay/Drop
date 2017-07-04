@@ -139,7 +139,7 @@ class TransferHandler(BaseHTTPRequestHandler):
             c.setopt(c.WRITEFUNCTION, f.write)
             c.setopt(c.PROGRESSFUNCTION, mainAppInd.transferProgress)
             c.perform()
-        cmd = "curl http://"+snp+":"+str(DropPort)+"/?DropDone="+fname
+        cmd = "curl http://"+snp.split(":")[0]+":"+str(DropPort)+"/?DropDone="+fname
         print(">>>>%s<<<<" % cmd)
         ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
@@ -300,7 +300,7 @@ Simple transfers across LAN with avahi
         for afile in files:
             if not "Landed/" in afile:
                 self.pushToQueue(afile)
-                
+
     def nullcallback(self):
         pass
 
