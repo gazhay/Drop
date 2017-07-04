@@ -179,6 +179,9 @@ class TransferHandler(BaseHTTPRequestHandler):
             return
 
 def run_on(port, chdir=None, indic=None):
+    print("[run_on] %d %s" %(port, chdir))
+    print("[run_on]")
+    print(indic)
     server_address = ('0.0.0.0', port)
     if not chdir==None:
         os.chdir(chdir)
@@ -297,7 +300,8 @@ Simple transfers across LAN with avahi
                 self.pushToQueue(afile)
 
     def doneCopy(self, srcname):
-        os.remove( srcname )
+        # os.remove( srcname )
+        os.rename(srcname, DropRoot+".staging/")
         self.popovQueue( srcname )
         self.inprogress = None
 
