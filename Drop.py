@@ -127,6 +127,7 @@ import pycurl
 class TransferHandler(BaseHTTPRequestHandler):
 
     def getFromRemote(self,snp, path, fname):
+        mainAppInd.mode = Modes.RECV
         # QUERY PUNTing this to another thread
         # print("[Remote Grab] get %s from %s " % (path,snp))
         c = pycurl.Curl()
@@ -226,6 +227,7 @@ class IndicatorDrop:
     lastpoll    = None
     filequeue   = []
     inprogress  = None
+    arrivals    = False
 
     def __init__(self):
         self.ind = AppIndicator.Indicator.new("indicator-drop", self.statusIcons[0], AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
@@ -305,6 +307,8 @@ Simple transfers across LAN with avahi
         for afile in files:
             if not "Landed/" in afile:
                 self.pushToQueue(afile)
+            else:
+                self.arrivals=True
 
     def nullcallback(self):
         pass
@@ -313,6 +317,7 @@ Simple transfers across LAN with avahi
         # os.remove( srcname )
         print("DONE COPY /\/\/\/\/\/\/\/\/\/\/\/\/")
         print(srcname)
+        self.mode=Modes.IDLE
         try:
             nameonly = os.path.basename(srcname)
             os.rename(srcname, DropRoot+".staging/"+nameonly)
@@ -337,13 +342,16 @@ Simple transfers across LAN with avahi
             self.fileCheck()
 
         if len(self.filequeue)>0:
+            self.mode = Modes.SEND
             print("My current transfer queue is ")
             print(self.filequeue)
             if self.inprogress == None:
                 self.inprogress = self.filequeue[0]
                 FileDrop(self.inprogress, self.doneCopy).run()
                 # copy.run()
-
+        if self.arrivals:
+            self.mode=Modes.RECV
+        
         if self.mode==Modes.IDLE:
             self.ind.set_icon( self.statusIcons[0] )
         elif self.mode==Modes.DROP:
