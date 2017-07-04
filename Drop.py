@@ -379,7 +379,7 @@ class AvahiListener(object):
                            desc, MYHOSTNAME+".local.")
 
     def cleanUpDir(self, dirname):
-        guessname = dirname.split(".")[0][1:]+".local."
+        guessname = dirname.split(".")[0]+".local."
         print("We want to remove "+guessname)
         try:
             os.remove(DropRoot+dirname)
@@ -397,10 +397,9 @@ class AvahiListener(object):
         for host in self.Hosts:
             if host.get("name")== name:
                 info = host
-
-        print("Removing %s" % info['info'].server)
-        self.cleanUpDir(info['info'].server)
-        self.Hosts.remove(info)
+            print("Removing %s" % info['info'].server)
+            self.cleanUpDir(info['info'].server)
+            self.Hosts.remove(info)
 
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
