@@ -129,7 +129,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         self.ind = indicator
         return
 
-    def getFromRemote(snp, path, fname):
+    def getFromRemote(self,snp, path, fname):
         # QUERY PUNTing this to another thread
         print("[Remote Grab] get %s from %s " % (path,snp))
         c = pycurl.Curl()
