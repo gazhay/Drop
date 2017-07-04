@@ -379,6 +379,8 @@ class AvahiListener(object):
                            desc, MYHOSTNAME+".local.")
 
     def cleanUpDir(self, dirname):
+        if not "local" in dirname:
+            dirname = dirname+".local."
         try:
             os.remove(DropRoot+dirname)
             return True
@@ -451,9 +453,9 @@ if __name__ == "__main__":
         server.start()
         mainAppInd.main()
         print("Begin Shutdown")
-        with suppress(Exception):
-            listener.unpublish()
-            mainAppInd.exit()
+        # with suppress(Exception):
+        listener.unpublish()
+        mainAppInd.exit()
     except KeyboardInterrupt:
         with suppress(Exception):
             listener.unpublish()
