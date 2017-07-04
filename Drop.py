@@ -66,10 +66,10 @@ def customiconPlease(folderName, iconname=None):
     # Write the changes back to the file
     folder.set_attributes_from_info(info, 0, None)
 
-def makeUserFolder(folderName):
+def makeUserFolder(folderName, iconname=None):
     try:
         os.mkdir(folderName, 0o0755)
-        customiconPlease(folderName)
+        customiconPlease(folderName, iconname=iconname)
     except:
         pass
     shutil.chown(folderName, user=DropUser, group=DropUser)
