@@ -425,7 +425,7 @@ class AvahiListener(object):
 
     def unpublish(self):
         self.cleanAll()
-        self.zc.unregister_service(info)
+        self.zc.unregister_service(self.info)
         self.zc.close()
         # os.remove("/etc/avahi/services/Drop.service")
 
