@@ -382,7 +382,7 @@ class AvahiListener(object):
         guessname = dirname.split(".")[0]+".local."
         print("We want to remove "+guessname)
         try:
-            os.remove(DropRoot+dirname)
+            shutil.rmtree(DropRoot+dirname, ignore_errors=True)
             return True
         except Exception as e:
             print(e)
