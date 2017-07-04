@@ -32,7 +32,7 @@ def get_resource_path(rel_path):
     abs_path_to_resource = os.path.abspath(rel_path_to_resource)
     return abs_path_to_resource
 
-VERSION   = "0.1a"
+VERSION   = "0.5b"
 ICONDIR   = get_resource_path("./DropIcons")
 DEVMODE   = True
 GetMyUser = subprocess.run("who | awk '{print $1}'", shell=True, stdout=subprocess.PIPE)
@@ -288,6 +288,7 @@ Simple transfers across LAN with avahi
         # check for os err on ls
         self.lastpoll=time.time()
         files = glob.glob(DropRoot+"*/*")
+        self.arrivals=False
         for afile in files:
             if not "Landed/" in afile:
                 self.pushToQueue(afile)
@@ -456,10 +457,12 @@ if __name__ == "__main__":
         mainAppInd.main()
         print("Begin Shutdown")
         # with suppress(Exception):
+        Gtk.main_quit()
         listener.unpublish()
         mainAppInd.exit()
     except KeyboardInterrupt:
         with suppress(Exception):
+            Gtk.main_quit()
             listener.unpublish()
             mainAppInd.exit()
     except Exception as e:
