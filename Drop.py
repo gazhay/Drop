@@ -300,6 +300,9 @@ Simple transfers across LAN with avahi
         for afile in files:
             if not "Landed/" in afile:
                 self.pushToQueue(afile)
+                
+    def nullcallback(self):
+        pass
 
     def doneCopy(self, srcname):
         # os.remove( srcname )
