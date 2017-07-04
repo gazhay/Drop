@@ -293,7 +293,7 @@ Simple transfers across LAN with avahi
 
     def doneCopy(self, srcname):
         # os.remove( srcname )
-        nameonly = os.path.basename(your_path)
+        nameonly = os.path.basename(srcname)
         os.rename(srcname, DropRoot+".staging/"+nameonly)
         self.popovQueue( srcname )
         self.inprogress = None
