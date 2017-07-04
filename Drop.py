@@ -379,6 +379,7 @@ class AvahiListener(object):
                            desc, MYHOSTNAME+".local.")
 
     def cleanUpDir(self, dirname):
+        print("We want to remove "+dirname)
         if not "local" in dirname:
             dirname = dirname+".local."
         try:
