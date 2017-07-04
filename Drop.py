@@ -450,13 +450,14 @@ if __name__ == "__main__":
         server.daemon = True # Do not make us wait for you to exit
         server.start()
         mainAppInd.main()
-        print("Main started")
-
+        print("Begin Shutdown")
+        with suppress(Exception):
+            listener.unpublish()
+            mainAppInd.exit()
     except KeyboardInterrupt:
         with suppress(Exception):
             listener.unpublish()
             mainAppInd.exit()
-            quit()
     except Exception as e:
         print(e)
     finally:
