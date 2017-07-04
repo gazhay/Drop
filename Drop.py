@@ -125,6 +125,8 @@ import pycurl
 
 # HTTPRequestHandler class
 class TransferHandler(BaseHTTPRequestHandler):
+    ind = None
+
     def attachind(self, indicator):
         self.ind = indicator
         return
@@ -185,6 +187,7 @@ def run_on(port, chdir=None, indic=None):
         httpd = HTTPServer(server_address, TransferHandler)
         if not indic==None:
             httpd.attachind(indic)
+            print("Tried to attach indicator")
     print("["+MYHOSTNAME+"]"+"[T]Starting a server on port %i" % port)
     httpd.serve_forever()
 
