@@ -19,12 +19,11 @@ from contextlib import suppress
 from threading import Thread
 
 tempsock = "/tmp/drop"
+polldelay = 5
 
 # TODO
 #
-# Directory create and destroy needs work
-# Pretty them dirs
-# Make transfers actually work
+# Better menus wioth options
 #
 def get_resource_path(rel_path):
     dir_of_py_file = os.path.dirname(__file__)
@@ -213,6 +212,7 @@ class IndicatorDrop:
     filequeue   = []
     inprogress  = None
     arrivals    = False
+    Hosts       = []
 
     def __init__(self):
         self.ind = AppIndicator.Indicator.new("indicator-drop", self.statusIcons[0], AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
@@ -324,8 +324,9 @@ Simple transfers across LAN with avahi
     def handler_timeout(self):
         #set icon based on self.mode
         # every x time poll directories
+        print(self.Hosts)
         try:
-            if (self.lastpoll==None) or ((time.time() - self.lastpoll)>30):
+            if (self.lastpoll==None) or ((time.time() - self.lastpoll)>polldelay):
                 self.fileCheck()
 
             if len(self.filequeue)>0:
@@ -404,6 +405,7 @@ class AvahiListener(object):
             print("Removing %s" % info['info'].server)
             self.cleanUpDir(info['info'].server)
             self.Hosts.remove(info)
+            target.Hosts.remove(host.get("name"))
 
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
@@ -417,6 +419,7 @@ class AvahiListener(object):
             # os.mkdir(newServ, 0o0755)
             # shutil.chown(newServ, user=DropUser, group=DropUser)
             self.Hosts.append({"name": name, "info": info})
+            target.Hosts.append(name)
         print("new server %s " % (info.server))
 
     def setTarget(self, targetobj):
