@@ -396,8 +396,9 @@ class AvahiListener(object):
     def remove_service(self, zeroconf, type, name):
         print("Service %s removed" % (name,))
         for host in self.Hosts:
-            if host.get("name")== name:
-                info = host
+            # if host.get("name")== name:
+            info = host
+            print(info)
             print("Removing %s" % info['info'].server)
             self.cleanUpDir(info['info'].server)
             self.Hosts.remove(info)
