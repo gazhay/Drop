@@ -405,7 +405,7 @@ class AvahiListener(object):
             print("Removing %s" % info['info'].server)
             self.cleanUpDir(info['info'].server)
             self.Hosts.remove(info)
-            mainAppInd.Hosts.remove(host.get("name"))
+            mainAppInd.Hosts.remove(info['info'].server)
 
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
