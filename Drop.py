@@ -41,7 +41,7 @@ DropLand  = DropRoot+"Landed/"
 DropStage = DropRoot+".staging/"
 DropPort  = 58769
 TranPort  = DropPort+1
-
+mainAppInd = None
 ## Do our required directories exist?
 
 # import sys
@@ -125,11 +125,6 @@ import pycurl
 
 # HTTPRequestHandler class
 class TransferHandler(BaseHTTPRequestHandler):
-    ind = None
-
-    def attachind(self, indicator):
-        self.ind = indicator
-        return
 
     def getFromRemote(self,snp, path, fname):
         # QUERY PUNTing this to another thread
@@ -138,7 +133,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         c.setopt(c.URL, 'http://'+snp+"/"+path+fname)
         with open(DropLand+fname, 'w') as f:
             c.setopt(c.WRITEFUNCTION, f.write)
-            c.setopt(c.PROGRESSFUNCTION, self.ind.transferProgress)
+            c.setopt(c.PROGRESSFUNCTION, mainAppInd.transferProgress)
             c.perform()
         return
 
@@ -187,9 +182,7 @@ def run_on(port, chdir=None, indic=None):
         os.chdir(chdir)
         httpd = HTTPServer(server_address, SimpleHTTPRequestHandler)
     else:
-        customTransfer = TransferHandler()
-        customTransfer.attachind(indic)
-        httpd = HTTPServer(server_address, customTransfer)
+        httpd = HTTPServer(server_address, TransferHandler)
     print("["+MYHOSTNAME+"]"+"[T]Starting a server on port %i" % port)
     httpd.serve_forever()
 
@@ -414,7 +407,7 @@ class AvahiListener(object):
 
 if __name__ == "__main__":
     try:
-        ind      = IndicatorDrop() # Basic Menu
+        mainAppInd = IndicatorDrop() # Basic Menu
         # # AVAHI PUBLISH
         zeroconf = Zeroconf()
         listener = AvahiListener() # Should publish me
@@ -426,10 +419,10 @@ if __name__ == "__main__":
         control = Thread(target=run_on, args=[DropPort])
         control.daemon = True # Do not make us wait for you to exit
         control.start()
-        server = Thread(target=run_on, args=[TranPort,DropRoot, ind])
+        server = Thread(target=run_on, args=[TranPort,DropRoot])
         server.daemon = True # Do not make us wait for you to exit
         server.start()
-        ind.main()
+        mainAppInd.main()
 
     except KeyboardInterrupt:
         with suppress(Exception):
