@@ -168,6 +168,10 @@ class TransferHandler(BaseHTTPRequestHandler):
             elif self.path.startswith("/?DropDone"):
                 self.send_response(200)
                 fetchMe = self.path[11:]
+                self.send_header('Content-type','text/plain')
+                self.end_headers()
+                message = "Thanks!"
+                self.wfile.write(bytes(message, "utf8"))
                 mainAppInd.doneCopy(DropRoot+servername+fetchMe)
             else:
                 self.send_response(404)
