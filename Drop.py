@@ -152,6 +152,7 @@ class TransferHandler(BaseHTTPRequestHandler):
             if self.path.startswith("/?DropPing"):
                 self.send_response(200)
                 fetchMe = self.path[11:]
+                print("*****"+fetchMe+"******"+self.path)
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
                 message = "Thanks!"
@@ -197,7 +198,6 @@ class FileDrop(Thread):
         print("["+MYHOSTNAME+"]"+"[T]Seperate Thread to copy %s" % self.srcfile)
         guessserver = self.srcfile.replace(DropRoot,"")
         (servername,junk,residualpath) = guessserver.partition("/")
-        print("{%s} |%s|", servername, residualpath)
         # New thinking.
         cmd = "curl http://"+servername+":"+str(DropPort)+"/?DropPing="+residualpath
         print(">>>>%s<<<<" % cmd)
