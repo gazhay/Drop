@@ -128,9 +128,11 @@ class TransferHandler(BaseHTTPRequestHandler):
 
     def getFromRemote(self,snp, path, fname):
         # QUERY PUNTing this to another thread
-        print("[Remote Grab] get %s from %s " % (path,snp))
+        # print("[Remote Grab] get %s from %s " % (path,snp))
         c = pycurl.Curl()
-        c.setopt(c.URL, 'http://'+snp+"/"+path+fname)
+        ccmd = 'http://'+snp+"/"+path+fname
+        print("*****" + ccmd)
+        c.setopt(c.URL, ccmd)
         with open(DropLand+fname, 'wb') as f:
             c.setopt(c.WRITEFUNCTION, f.write)
             c.setopt(c.PROGRESSFUNCTION, mainAppInd.transferProgress)
@@ -152,7 +154,6 @@ class TransferHandler(BaseHTTPRequestHandler):
             if self.path.startswith("/?DropPing"):
                 self.send_response(200)
                 fetchMe = self.path[11:]
-                print("*****"+fetchMe+"******"+self.path)
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
                 message = "Thanks!"
