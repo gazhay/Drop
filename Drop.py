@@ -3,6 +3,7 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib, GdkPixbuf
 from gi.repository import GObject
+from gi.repository import Gio
 
 try:
     gi.require_version('AppIndicator3', '0.1')
@@ -42,36 +43,33 @@ DropStage = DropRoot+".staging/"
 DropPort  = 58769
 TranPort  = DropPort+1
 mainAppInd = None
-## Do our required directories exist?
+ActualDelete = True
 
-# import sys
-# from gi.repository import Gio
-#
-# if len(sys.argv) not in (2, 3):
-#     print 'Usage: {} FOLDER [ICON]'.format(sys.argv[0])
-#     print 'Leave out ICON to unset'
-#     sys.exit(0)
-#
-# folder = Gio.File.new_for_path(sys.argv[1])
-# icon_file = Gio.File.new_for_path(sys.argv[2]) if len(sys.argv) == 3 else None
-#
-# # Get a file info object
-# info = folder.query_info('metadata::custom-icon', 0, None)
-#
-# if icon_file is not None:
-#     icon_uri = icon_file.get_uri()
-#     info.set_attribute_string('metadata::custom-icon', icon_uri)
-# else:
-#     # Change the attribute type to INVALID to unset it
-#     info.set_attribute('metadata::custom-icon',
-#         Gio.FileAttributeType.INVALID, '')
-#
-# # Write the changes back to the file
-# folder.set_attributes_from_info(info, 0, None)
+def customiconPlease(folderName, iconname=None):
+    folder = Gio.File.new_for_path(folderName)
+    if folderName==DropRoot:
+        icon_file = Gio.File.new_for_path(ICONDIR+"/dropicon.png")
+    elif folderName==DropLand:
+        icon_file = Gio.File.new_for_path(ICONDIR+"/droprecv.png")
+    elif iconname!=None:
+        icon_file = Gio.File.new_for_path(ICONDIR+"/"+iconname)
+    else:
+        icon_file = None
+    info = folder.query_info('metadata::custom-icon', 0, None)
+    if icon_file is not None:
+        icon_uri = icon_file.get_uri()
+        info.set_attribute_string('metadata::custom-icon', icon_uri)
+    else:
+        # Change the attribute type to INVALID to unset it
+        info.set_attribute('metadata::custom-icon',
+            Gio.FileAttributeType.INVALID, '')
+    # Write the changes back to the file
+    folder.set_attributes_from_info(info, 0, None)
 
 def makeUserFolder(folderName):
     try:
         os.mkdir(folderName, 0o0755)
+        customiconPlease(folderName)
     except:
         pass
     shutil.chown(folderName, user=DropUser, group=DropUser)
@@ -128,20 +126,16 @@ class TransferHandler(BaseHTTPRequestHandler):
 
     def getFromRemote(self,snp, path, fname):
         mainAppInd.mode = Modes.RECV
-        # QUERY PUNTing this to another thread
-        # print("[Remote Grab] get %s from %s " % (path,snp))
         c = pycurl.Curl()
         if not "local" in path:
             path = path.split(".")[0]+".local."
         ccmd = 'http://'+snp+"/"+path+"/"+fname
-        print("*****" + ccmd)
         c.setopt(c.URL, ccmd)
         with open(DropLand+fname, 'wb') as f:
             c.setopt(c.WRITEFUNCTION, f.write)
             c.setopt(c.PROGRESSFUNCTION, mainAppInd.transferProgress)
             c.perform()
         cmd = "curl http://"+snp.split(":")[0]+":"+str(DropPort)+"/?DropDone="+fname
-        print(">>>>%s<<<<" % cmd)
         ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
         return
@@ -149,7 +143,6 @@ class TransferHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         # if 'http:' in self.headers.getheaders('referer'): #moducum of security
         (servername, serverport) = self.client_address
-        print("[TransferHandler] servername %s request %s " % (servername, self.path))
         try:
             servername = socket.gethostbyaddr(servername)[0] # return .lan
             if "." in servername: # Fudge for local dns
@@ -173,7 +166,6 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 message = "DropDone!"
                 self.wfile.write(bytes(message, "utf8"))
-                print("Recived done copy notifcation for : "+fetchMe)
                 mainAppInd.doneCopy(DropRoot+servername+"/"+fetchMe)
             else:
                 self.send_response(404)
@@ -181,7 +173,6 @@ class TransferHandler(BaseHTTPRequestHandler):
                 return
             # self.flush()
         except Exception as e:
-            print("["+MYHOSTNAME+"]"+"[T]Error")
             print(e)
             with suppress(Exception):
                 self.finish()
@@ -190,9 +181,6 @@ class TransferHandler(BaseHTTPRequestHandler):
             return
 
 def run_on(port, chdir=None, indic=None):
-    print("[run_on] %d %s" %(port, chdir))
-    print("[run_on]")
-    print(indic)
     server_address = ('0.0.0.0', port)
     if not chdir==None:
         os.chdir(chdir)
@@ -210,15 +198,12 @@ class FileDrop(Thread):
         self.srcfile  = srcfile
 
     def run(self):
-        print("["+MYHOSTNAME+"]"+"[T]Seperate Thread to copy %s" % self.srcfile)
         guessserver = self.srcfile.replace(DropRoot,"")
         (servername,junk,residualpath) = guessserver.partition("/")
         # New thinking.
         cmd = "curl http://"+servername+":"+str(DropPort)+"/?DropPing="+residualpath
-        print(">>>>%s<<<<" % cmd)
         ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
-        print("[T]Sim copy over")
         # self.callback(self.srcfile)
 
 # ############################################################################## Indicator
@@ -293,7 +278,6 @@ Simple transfers across LAN with avahi
 
     def pushToQueue(self, item):
         if item not in self.filequeue:
-            print("Adding %s" % item)
             self.filequeue.append(item)
 
     def popovQueue(self, item):
@@ -314,13 +298,13 @@ Simple transfers across LAN with avahi
         pass
 
     def doneCopy(self, srcname):
-        # os.remove( srcname )
-        print("DONE COPY /\/\/\/\/\/\/\/\/\/\/\/\/")
-        print(srcname)
         self.mode=Modes.IDLE
         try:
-            nameonly = os.path.basename(srcname)
-            os.rename(srcname, DropRoot+".staging/"+nameonly)
+            if not ActualDelete:
+                nameonly = os.path.basename(srcname)
+                os.rename(srcname, DropRoot+".staging/"+nameonly)
+            else:
+                os.remove( srcname )
         except:
             print("Could not remove physical file")
         self.popovQueue( srcname )
@@ -338,39 +322,44 @@ Simple transfers across LAN with avahi
     def handler_timeout(self):
         #set icon based on self.mode
         # every x time poll directories
-        if (self.lastpoll==None) or ((time.time() - self.lastpoll)>30):
-            self.fileCheck()
+        try:
+            if (self.lastpoll==None) or ((time.time() - self.lastpoll)>30):
+                self.fileCheck()
 
-        if len(self.filequeue)>0:
-            self.mode = Modes.SEND
-            print("My current transfer queue is ")
-            print(self.filequeue)
-            if self.inprogress == None:
-                self.inprogress = self.filequeue[0]
-                FileDrop(self.inprogress, self.doneCopy).run()
-                # copy.run()
-        if self.arrivals:
-            self.mode=Modes.RECV
-        
-        if self.mode==Modes.IDLE:
-            self.ind.set_icon( self.statusIcons[0] )
-        elif self.mode==Modes.DROP:
-            self.ind.set_icon( self.statusIcons[0] )
-        elif self.mode==Modes.SEND:
-            # TODO %
-            self.ind.set_icon( self.statusIcons[2] )
-        elif self.mode==Modes.RECV:
-            # ANimate this
-            self.ind.set_icon( self.statusIcons[1] )
+            if len(self.filequeue)>0:
+                self.mode = Modes.SEND
+                if self.inprogress == None:
+                    self.inprogress = self.filequeue[0]
+                    FileDrop(self.inprogress, self.doneCopy).run()
+                    # copy.run()
+            if self.arrivals:
+                self.mode=Modes.RECV
 
-        return True
+            if self.mode==Modes.IDLE:
+                self.ind.set_icon( self.statusIcons[0] )
+            elif self.mode==Modes.DROP:
+                self.ind.set_icon( self.statusIcons[0] )
+            elif self.mode==Modes.SEND:
+                # TODO %
+                self.ind.set_icon( self.statusIcons[2] )
+            elif self.mode==Modes.RECV:
+                # ANimate this
+                self.ind.set_icon( self.statusIcons[1] )
+
+            return True
+        except KeyboardInterrupt:
+            return False
 
     def attachControl(self, cHttp):
         self.control = cHttp
 
     def main(self):
         #  attempt multiprocess shenanigans
-        Gtk.main()
+        try:
+            Gtk.main()
+        except KeyboardInterrupt:
+            self.exit()
+            return
 
     def exit(self):
         Gtk.main_quit()
@@ -378,7 +367,7 @@ Simple transfers across LAN with avahi
 # ############################################################################## Avahi
 class AvahiListener(object):
     target = ""
-    Hosts = None
+    Hosts = []
     info  = None
 
     def __init__(self):
@@ -402,6 +391,7 @@ class AvahiListener(object):
             self.cleanUpDir(host.get("name"))
 
     def remove_service(self, zeroconf, type, name):
+        print("Service %s removed" % (name,))
         for host in self.Hosts:
             if host.get("name")== name:
                 info = host
@@ -413,14 +403,16 @@ class AvahiListener(object):
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
         # subitem = Gtk.CheckMenuItem()
-        print("new server %s \n me %s" % (info.server, MYHOSTNAME))
         if info.server == MYHOSTNAME+".local.":
-            print("Not adding myself")
+            # print("Not adding myself")
+            pass
         else:
             newServ = DropRoot+info.server
-            os.mkdir(newServ, 0o0755)
-            shutil.chown(newServ, user=DropUser, group=DropUser)
+            makeUserFolder(newServ)
+            # os.mkdir(newServ, 0o0755)
+            # shutil.chown(newServ, user=DropUser, group=DropUser)
             self.Hosts.append({"name": name, "info": info})
+        print("new server %s " % (info.server))
 
     def setTarget(self, targetobj):
         self.target = targetobj
@@ -446,7 +438,10 @@ if __name__ == "__main__":
         listener.setTarget(mainAppInd);   # Allow crosstalk
         listener.setZC(zeroconf)
         # # AVAHI LISTEN
-        browser  = ServiceBrowser(zeroconf, "_drop-target._tcp.local.", listener) # find siblings
+        # browser  = ServiceBrowser(zeroconf, "_drop-target._tcp.local.", listener) # find siblings
+        browser = Thread(target=ServiceBrowser, args=[zeroconf, "_drop-target._tcp.local.", listener])
+        browser.daemon =True
+        browser.start()
         # # HTTPd for file transfers
         control = Thread(target=run_on, args=[DropPort])
         control.daemon = True # Do not make us wait for you to exit
@@ -455,18 +450,15 @@ if __name__ == "__main__":
         server.daemon = True # Do not make us wait for you to exit
         server.start()
         mainAppInd.main()
+        print("Main started")
 
     except KeyboardInterrupt:
         with suppress(Exception):
-            print("Going down...")
             listener.unpublish()
             mainAppInd.exit()
             quit()
     except Exception as e:
         print(e)
     finally:
-        with suppress(Exception):
-          listener.unpublish()
-          mainAppInd.exit()
         print("Bye.")
         quit()
