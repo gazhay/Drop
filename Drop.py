@@ -139,6 +139,10 @@ class TransferHandler(BaseHTTPRequestHandler):
             c.setopt(c.WRITEFUNCTION, f.write)
             c.setopt(c.PROGRESSFUNCTION, mainAppInd.transferProgress)
             c.perform()
+        cmd = "curl http://"+snp+":"+str(DropPort)+"/?DropDone="+fname
+        print(">>>>%s<<<<" % cmd)
+        ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
+        print(ping.stdout.decode("utf8"))
         return
 
     def do_GET(self):
@@ -160,9 +164,11 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 message = "Thanks!"
                 self.wfile.write(bytes(message, "utf8"))
-                self.finish()
-                self.connection.close()
                 self.getFromRemote("%s:%d" % (servername,TranPort), MYHOSTNAME, fetchMe)
+            elif self.path.startswith("/?DropDone"):
+                self.send_response(200)
+                fetchMe = self.path[11:]
+                mainAppInd.doneCopy(DropRoot+servername+fetchMe)
             else:
                 self.send_response(404)
                 self.end_headers()
@@ -207,7 +213,7 @@ class FileDrop(Thread):
         ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
         print("[T]Sim copy over")
-        self.callback(self.srcfile)
+        # self.callback(self.srcfile)
 
 # ############################################################################## Indicator
 class IndicatorDrop:
