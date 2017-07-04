@@ -379,9 +379,8 @@ class AvahiListener(object):
                            desc, MYHOSTNAME+".local.")
 
     def cleanUpDir(self, dirname):
-        print("We want to remove "+dirname)
-        if not "local" in dirname:
-            dirname = dirname+".local."
+        guessname = dirname.split(".")[0][1:]+".local."
+        print("We want to remove "+guessname)
         try:
             os.remove(DropRoot+dirname)
             return True
@@ -422,11 +421,12 @@ class AvahiListener(object):
 
     def setZC(self, targetZC):
         self.zc = targetZC
+        self.publishedas = self.info
         self.zc.register_service(self.info)
 
     def unpublish(self):
         self.cleanAll()
-        self.zc.unregister_service(self.info)
+        self.zc.unregister_service(self.publishedas)
         self.zc.close()
         # os.remove("/etc/avahi/services/Drop.service")
 
