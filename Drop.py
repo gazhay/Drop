@@ -297,7 +297,7 @@ Simple transfers across LAN with avahi
                 self.pushToQueue(afile)
 
     def doneCopy(self, srcname):
-        # os.remove( srcname )
+        os.remove( srcname )
         self.popovQueue( srcname )
         self.inprogress = None
 
