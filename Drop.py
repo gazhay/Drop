@@ -162,7 +162,7 @@ class TransferHandler(BaseHTTPRequestHandler):
                 fetchMe = self.path[11:]
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
-                message = "Thanks!"
+                message = "DropPing!"
                 self.wfile.write(bytes(message, "utf8"))
                 self.getFromRemote("%s:%d" % (servername,TranPort), MYHOSTNAME, fetchMe)
             elif self.path.startswith("/?DropDone"):
@@ -170,9 +170,10 @@ class TransferHandler(BaseHTTPRequestHandler):
                 fetchMe = self.path[11:]
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
-                message = "Thanks!"
+                message = "DropDone!"
                 self.wfile.write(bytes(message, "utf8"))
-                mainAppInd.doneCopy(DropRoot+servername+fetchMe)
+                print("Recived done copy notifcation for : "+fetchMe)
+                mainAppInd.doneCopy(DropRoot+servername+"/"+fetchMe)
             else:
                 self.send_response(404)
                 self.end_headers()
@@ -310,8 +311,13 @@ Simple transfers across LAN with avahi
 
     def doneCopy(self, srcname):
         # os.remove( srcname )
-        nameonly = os.path.basename(srcname)
-        os.rename(srcname, DropRoot+".staging/"+nameonly)
+        print("DONE COPY /\/\/\/\/\/\/\/\/\/\/\/\/")
+        print(srcname)
+        try:
+            nameonly = os.path.basename(srcname)
+            os.rename(srcname, DropRoot+".staging/"+nameonly)
+        except:
+            print("Could not remove physical file")
         self.popovQueue( srcname )
         self.inprogress = None
 
