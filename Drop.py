@@ -130,7 +130,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         # QUERY PUNTing this to another thread
         # print("[Remote Grab] get %s from %s " % (path,snp))
         c = pycurl.Curl()
-        if "local" not in snp:
+        if not "local" in snp:
             snp = snp.split(".")[0]+".local."
         ccmd = 'http://'+snp+"/"+path+"/"+fname
         print("*****" + ccmd)
