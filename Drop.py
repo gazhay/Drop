@@ -293,7 +293,8 @@ Simple transfers across LAN with avahi
         self.lastpoll=time.time()
         files = glob.glob(DropRoot+"*/*")
         for afile in files:
-            self.pushToQueue(afile)
+            if not "Landed/" in afile:
+                self.pushToQueue(afile)
 
     def doneCopy(self, srcname):
         # os.remove( srcname )
