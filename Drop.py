@@ -380,12 +380,12 @@ class AvahiListener(object):
 
     def cleanUpDir(self, dirname):
         guessname = dirname.split(".")[0]+".local."
-        print("We want to remove "+guessname)
+        # print("We want to remove "+guessname)
         try:
             shutil.rmtree(DropRoot+dirname, ignore_errors=True)
             return True
         except Exception as e:
-            print(e)
+            # print(e)
             return False
 
     def cleanAll(self):
@@ -394,11 +394,11 @@ class AvahiListener(object):
             self.cleanUpDir(host.get("name"))
 
     def remove_service(self, zeroconf, type, name):
-        print("Service %s removed" % (name,))
+        # print("Service %s removed" % (name,))
         for host in self.Hosts:
             # if host.get("name")== name:
             info = host
-            print(info)
+            # print(info)
             print("Removing %s" % info['info'].server)
             self.cleanUpDir(info['info'].server)
             self.Hosts.remove(info)
@@ -411,7 +411,7 @@ class AvahiListener(object):
             pass
         else:
             newServ = DropRoot+info.server
-            makeUserFolder(newServ)
+            makeUserFolder(newServ, "dropicon.png")
             # os.mkdir(newServ, 0o0755)
             # shutil.chown(newServ, user=DropUser, group=DropUser)
             self.Hosts.append({"name": name, "info": info})
