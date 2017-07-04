@@ -411,7 +411,7 @@ class AvahiListener(object):
             pass
         else:
             newServ = DropRoot+info.server
-            makeUserFolder(newServ, "dropicon.png")
+            makeUserFolder(newServ, iconname="dropicon.png")
             # os.mkdir(newServ, 0o0755)
             # shutil.chown(newServ, user=DropUser, group=DropUser)
             self.Hosts.append({"name": name, "info": info})
