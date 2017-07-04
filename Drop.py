@@ -411,7 +411,7 @@ if __name__ == "__main__":
         # # AVAHI PUBLISH
         zeroconf = Zeroconf()
         listener = AvahiListener() # Should publish me
-        listener.setTarget(ind);   # Allow crosstalk
+        listener.setTarget(mainAppInd);   # Allow crosstalk
         listener.setZC(zeroconf)
         # # AVAHI LISTEN
         browser  = ServiceBrowser(zeroconf, "_drop-target._tcp.local.", listener) # find siblings
@@ -428,13 +428,13 @@ if __name__ == "__main__":
         with suppress(Exception):
             print("Going down...")
             listener.unpublish()
-            ind.exit()
+            mainAppInd.exit()
             quit()
     except Exception as e:
         print(e)
     finally:
         with suppress(Exception):
           listener.unpublish()
-          ind.exit()
+          mainAppInd.exit()
         print("Bye.")
         quit()
