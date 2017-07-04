@@ -289,6 +289,7 @@ Simple transfers across LAN with avahi
         self.lastpoll=time.time()
         files = glob.glob(DropRoot+"*/*")
         self.arrivals=False
+        self.mode=Modes.IDLE
         for afile in files:
             if not "Landed/" in afile:
                 self.pushToQueue(afile)
