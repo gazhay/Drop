@@ -43,6 +43,9 @@
 #
 # Control the daemon via the AppIndicator menu
 #
+#
+# TODO
+# - Check subdirectory works - might dwonload, not create subdirs
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -285,19 +288,7 @@ class IndicatorDrop:
             Gtk.FileChooserAction.OPEN,
             (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
              Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
-
-        # filter = Gtk.FileFilter()
-        # filter.set_name("Videos")
-        # filter.add_mime_type("video/mpeg")
-        # filter.add_pattern("*.mp4")
-        # filter.add_pattern("*.ogg")
-        # filter.add_pattern("*.mkv")
-        # filter.add_pattern("*.mpeg")
-        # filter.add_pattern("*.avi")
-        # dialog.add_filter(filter)
-
         targetHost = evt.get_label()
-
         response = dialog.run()
         ff = dialog.get_filename()
         dialog.destroy()
@@ -316,7 +307,6 @@ class IndicatorDrop:
         self.ind.set_status (AppIndicator.IndicatorStatus.ACTIVE)
         self.mode = Modes.IDLE
 
-        # have to give indicator a menu
         self.menu = Gtk.Menu()
 
         self.addMenuItem( self.menu, "About...", self.aboutDialog)
@@ -324,7 +314,9 @@ class IndicatorDrop:
             self.addMenuItem( self.menu, "Restart", self.reboot)
         self.addSeperator(self.menu)
         self.hostitem = self.addMenuItem(self.menu, "Send To Host", self.nullHandler )
-        self.addMenuItem( self.menu, "Open Drop Folder", self.openDrop)
+        self.addSeperator(self.menu)
+        self.addMenuItem( self.menu, "Open Drop Folder", self.openDrop   )
+        self.addMenuItem( self.menu, "Clear Drops"     , self.clearDrops )
         self.addSeperator(self.menu)
         self.addMenuItem(self.menu, "Exit", self.handler_menu_exit )
 
@@ -335,6 +327,9 @@ class IndicatorDrop:
     def openDrop(self,evt):
         subprocess.run("xdg-open "+DropRoot, shell=True)
         return
+
+    def clearDrops(self,evt):
+        shutil.rmtree(DropLand+"*")
 
     def addSeperator(self, menu):
         item = Gtk.SeparatorMenuItem()
