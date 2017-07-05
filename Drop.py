@@ -90,7 +90,7 @@ mainAppInd = None
 ActualDelete = True
 
 if DEVMODE:
-    print(__file__)
+    print(get_resource_path("."))
 
 def customiconPlease(folderName, iconname=None):
     folder = Gio.File.new_for_path(folderName)
