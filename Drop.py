@@ -376,7 +376,7 @@ Simple transfers across LAN with avahi
 
     def reboot(self, evt):
         Gtk.main_quit()
-        os.execv(__file__, sys.argv)
+        os.execv(get_resource_path(__file__), sys.argv)
 
     def handler_menu_exit(self, evt):
         self.exit()
