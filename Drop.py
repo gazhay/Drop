@@ -1,36 +1,36 @@
 #!/usr/bin/env python3
 
-#                          ,..
-#                      _,-'   `-,_
-#                   ,,'          ``._
-#                ,-'                ``..
-#            _,-'  ____                 `-.
-#         ,-'     |  _ \ _ __ ___  _ __    `-._
-#     _,-'        | | | | '__/ _ \| '_ \       `..
-#   .'            | |_| | | | (_) | |_) |         `.,_
-# ,-..            |____/|_|  \___/| .__/          _,-'
-# |   `-._                        |_|          ,,'   |
-# |       `..                              _.-'      |
-# |          `-._                       ,-'          |
-# |              `-._               _.-'             |
-# |                 '`..         ,-'                 |
-# |                     `-._ _,-'                    |
-# |                         '                        |
-# |                         |                        |
-# |                         |                        |
-# |                         |                        |
-# |                         |                        |
-# |                         |                        |
-# |                         |                        |
-# |                         |                        |
-#  `,_                      |                      ,-'
-#     -'.                   |                  _,-'
-#        ``,_               |               ,,'
-#            --.            |            ,-'
-#               `.._        |        _.-'
-#                    .      |     ,.'
-#                     ``-,  |  ,-'
-#                         `-'`'
+#                                     ,..
+#                                 _,-'   `-,_
+#                              ,,'          ``._
+#                           ,-'                ``..
+#                       _,-'  ____                 `-.
+#                    ,-'     |  _ \ _ __ ___  _ __    `-._
+#                _,-'        | | | | '__/ _ \| '_ \       `..
+#              .'            | |_| | | | (_) | |_) |         `.,_
+#            ,-..            |____/|_|  \___/| .__/          _,-'
+#            |   `-._                        |_|          ,,'   |
+#            |       `..                              _.-'      |
+#            |          `-._                       ,-'          |
+#            |              `-._               _.-'             |
+#            |                 '`..         ,-'                 |
+#            |                     `-._ _,-'                    |
+#            |                         '                        |
+#            |                         |                        |
+#            |                         |                        |
+#            |                         |                        |
+#            |                         |                        |
+#            |                         |                        |
+#            |                         |                        |
+#            |                         |                        |
+#             `,_                      |                      ,-'
+#                -'.                   |                  _,-'
+#                   ``,_               |               ,,'
+#                       --.            |            ,-'
+#                          `.._        |        _.-'
+#                               .      |     ,.'
+#                                ``-,  |  ,-'
+#                                    `-'`'
 #
 #
 # A Hacky Lan based linux file transfer program.
@@ -46,6 +46,9 @@
 #
 # TODO
 # - Check subdirectory works - might dwonload, not create subdirs
+# - Decode bonjour/avahi hosts extra info
+#    - Should probably have shortname fqdn etc
+# - Preferences
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -62,13 +65,15 @@ except:
 import re,subprocess,socket
 import shutil, glob
 import time,os,signal,sys
+import json
 from urllib.parse import quote, unquote
 from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo
 from contextlib import suppress
 from threading import Thread
 
-tempsock = "/tmp/drop"
-polldelay = 5
+# tempsock = "/tmp/drop"
+GetMyUser    = subprocess.run("who | awk '{print $1}' | head -n 1", shell=True, stdout=subprocess.PIPE)
+polldelay    = 5
 
 def get_resource_path(rel_path):
     dir_of_py_file = os.path.dirname(__file__)
@@ -76,19 +81,48 @@ def get_resource_path(rel_path):
     abs_path_to_resource = os.path.abspath(rel_path_to_resource)
     return abs_path_to_resource
 
-VERSION   = "0.7"
-ICONDIR   = get_resource_path("./DropIcons")
-DEVMODE   = True
-HUP       = get_resource_path(__file__)
-GetMyUser = subprocess.run("who | awk '{print $1}' | head -n 1", shell=True, stdout=subprocess.PIPE)
-DropUser  = GetMyUser.stdout.decode("utf8").rstrip()
-DropRoot  = "/home/"+DropUser+"/Drop/"
-DropLand  = DropRoot+"Landed/"
-DropStage = DropRoot+".staging/"
-DropPort  = 58769
-TranPort  = DropPort+1
-mainAppInd = None
-ActualDelete = True
+VERSION      = "0.7"
+ICONDIR      = get_resource_path("./DropIcons")
+CONFIGFL     = os.path.abspath(os.path.expanduser("~/.drop.conf"))
+HUP          = get_resource_path(__file__)
+configfuse   = False
+if not os.path.isfile(CONFIGFL):
+    with open(CONFIGFL, "w+") as cfg:
+        data = {}
+        json.dump(data, cfg)
+        configfuse = True
+
+with open(CONFIGFL, "r") as cfg:
+    try:
+        data = json.load(cfg)
+    except:
+        data = {}
+    print(data)
+    DEVMODE      = data.get("DEVMODE", True)
+    DropUser     = GetMyUser.stdout.decode("utf8").rstrip()
+    DropRoot     = data.get("DropRoot"    , "/home/"+DropUser+"/Drop/")
+    DropLand     = data.get("DropLand"    , DropRoot+"Landed/"        )
+    DropStage    = data.get("DropStage"   , DropRoot+".staging/"      )
+    DropPort     = data.get("DropPort"    , 58769                     )
+    TranPort     = data.get("TranPort"    , DropPort+1                )
+    ActualDelete = data.get("ActualDelete", True                      )
+
+mainAppInd   = None
+
+if configfuse:
+    with open(CONFIGFL, "w+") as cfg:
+        data = {
+            "DEVMODE"      : DEVMODE,
+            "DropUser"     : DropUser,
+            "DropRoot"     : DropRoot,
+            "DropLand"     : DropLand,
+            "DropStage"    : DropStage,
+            "DropPort"     : DropPort,
+            "TranPort"     : TranPort,
+            "ActualDelete" : ActualDelete
+        }
+        json.dump(data, cfg)
+    print("Wrote default config")
 
 def customiconPlease(folderName, iconname=None):
     folder = Gio.File.new_for_path(folderName)
@@ -395,7 +429,9 @@ Simple transfers across LAN with avahi
         self.arrivals=False
         self.mode=Modes.IDLE
         for afile in files:
-            if not "Landed/" in afile:
+            if os.isdir(afile):
+                pass
+            elif not "Landed/" in afile:
                 self.pushToQueue(afile)
             else:
                 self.arrivals=True
@@ -428,7 +464,7 @@ Simple transfers across LAN with avahi
     def handler_timeout(self):
         #set icon based on self.mode
         # every x time poll directories
-        # print(self.Hosts)
+        # Should really go with pyinotify or some such
         try:
             if (self.lastpoll==None) or ((time.time() - self.lastpoll)>polldelay):
                 self.fileCheck()
