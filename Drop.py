@@ -89,9 +89,6 @@ TranPort  = DropPort+1
 mainAppInd = None
 ActualDelete = True
 
-if DEVMODE:
-    print(get_resource_path("."))
-
 def customiconPlease(folderName, iconname=None):
     folder = Gio.File.new_for_path(folderName)
     if folderName==DropRoot:
@@ -376,6 +373,7 @@ Simple transfers across LAN with avahi
 
     def reboot(self, evt):
         Gtk.main_quit()
+        print("rerun '"+get_resource_path(__file__)+"'")
         os.execv(get_resource_path(__file__), sys.argv)
 
     def handler_menu_exit(self, evt):
