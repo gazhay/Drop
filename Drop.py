@@ -79,6 +79,7 @@ def get_resource_path(rel_path):
 VERSION   = "0.6"
 ICONDIR   = get_resource_path("./DropIcons")
 DEVMODE   = True
+HUP       = get_resource_path(__file__)
 GetMyUser = subprocess.run("who | awk '{print $1}' | head -n 1", shell=True, stdout=subprocess.PIPE)
 DropUser  = GetMyUser.stdout.decode("utf8").rstrip()
 DropRoot  = "/home/"+DropUser+"/Drop/"
@@ -373,8 +374,8 @@ Simple transfers across LAN with avahi
 
     def reboot(self, evt):
         Gtk.main_quit()
-        print("rerun '"+get_resource_path(__file__)+"'")
-        os.execv(get_resource_path(__file__), sys.argv)
+        print(HUP)
+        os.execv(HUP, sys.argv)
 
     def handler_menu_exit(self, evt):
         self.exit()
