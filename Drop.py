@@ -277,7 +277,37 @@ class IndicatorDrop:
         self.hostitem.set_submenu( submenu )
 
     def sendToHost(self, evt):
-        pass
+        dialog = Gtk.FileChooserDialog("Please choose a file", None,
+            Gtk.FileChooserAction.OPEN,
+            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
+             Gtk.STOCK_OPEN, Gtk.ResponseType.OK))
+
+        # filter = Gtk.FileFilter()
+        # filter.set_name("Videos")
+        # filter.add_mime_type("video/mpeg")
+        # filter.add_pattern("*.mp4")
+        # filter.add_pattern("*.ogg")
+        # filter.add_pattern("*.mkv")
+        # filter.add_pattern("*.mpeg")
+        # filter.add_pattern("*.avi")
+        # dialog.add_filter(filter)
+
+        if evt.get_active()==True:
+            targetHost = evt.get_label()
+        else:
+            alert("No target host found")
+            return
+
+        response = dialog.run()
+        ff = dialog.get_filename()
+        dialog.destroy()
+        time.sleep(0.1)
+        if response == Gtk.ResponseType.OK:
+            nameonly = os.path.basename(ff)
+            shutil.copyfile(ff, DropRoot+targetHost+"/"+nameonly)
+            return
+        elif response == Gtk.ResponseType.CANCEL:
+            print("Cancel clicked")
 
     def __init__(self):
         self.ind = AppIndicator.Indicator.new("indicator-drop", self.statusIcons[0], AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
