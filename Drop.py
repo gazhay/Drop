@@ -58,7 +58,8 @@ except:
 
 import re,subprocess,socket
 import shutil, glob
-import urllib.parse,time,os,signal,sys
+import time,os,signal,sys
+from urllib.parse import quote_plus, unquote_plus
 from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo
 from contextlib import suppress
 from threading import Thread
@@ -175,7 +176,7 @@ class TransferHandler(BaseHTTPRequestHandler):
             c.setopt(c.WRITEFUNCTION, f.write)
             c.setopt(c.PROGRESSFUNCTION, mainAppInd.transferProgress)
             c.perform()
-        cmd = "curl http://"+snp.split(":")[0]+":"+str(DropPort)+"/?DropDone="+fname
+        cmd = "curl http://"+snp.split(":")[0]+":"+str(DropPort)+"/?DropDone="+quote_plus(fname)
         ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
         return
@@ -193,7 +194,8 @@ class TransferHandler(BaseHTTPRequestHandler):
         try:
             if self.path.startswith("/?DropPing"):
                 self.send_response(200)
-                fetchMe = self.path[11:]
+                fetchMe = unquote_plus(self.path[11:])
+                print("fetchme = '"+fetchMe+"'")
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
                 message = "DropPing!"
@@ -201,7 +203,7 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.getFromRemote("%s:%d" % (servername,TranPort), MYHOSTNAME, fetchMe)
             elif self.path.startswith("/?DropDone"):
                 self.send_response(200)
-                fetchMe = self.path[11:]
+                fetchMe = unquote_plus(self.path[11:])
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
                 message = "DropDone!"
@@ -241,7 +243,8 @@ class FileDrop(Thread):
         guessserver = self.srcfile.replace(DropRoot,"")
         (servername,junk,residualpath) = guessserver.partition("/")
         # New thinking.
-        cmd = "curl http://"+servername+":"+str(DropPort)+"/?DropPing="+residualpath
+        print("Path = '"+residualpath+"'")
+        cmd = "curl http://"+servername+":"+str(DropPort)+"/?DropPing="+quote_plus(residualpath)
         ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
         # self.callback(self.srcfile)
@@ -292,11 +295,7 @@ class IndicatorDrop:
         # filter.add_pattern("*.avi")
         # dialog.add_filter(filter)
 
-        if evt.get_active()==True:
-            targetHost = evt.get_label()
-        else:
-            alert("No target host found")
-            return
+        targetHost = evt.get_label()
 
         response = dialog.run()
         ff = dialog.get_filename()
@@ -324,12 +323,17 @@ class IndicatorDrop:
             self.addMenuItem( self.menu, "Restart", self.reboot)
         self.addSeperator(self.menu)
         self.hostitem = self.addMenuItem(self.menu, "Send To Host", self.nullHandler )
+        self.addMenuItem( self.menu, "Open Drop Folder", self.openDrop)
         self.addSeperator(self.menu)
         self.addMenuItem(self.menu, "Exit", self.handler_menu_exit )
 
         self.menu.show()
         self.ind.set_menu(self.menu)
         GLib.timeout_add_seconds(1, self.handler_timeout)
+
+    def openDrop(self,evt):
+        subprocess.run("xdg-open "+DropRoot, shell=True)
+        return
 
     def addSeperator(self, menu):
         item = Gtk.SeparatorMenuItem()
@@ -410,7 +414,7 @@ Simple transfers across LAN with avahi
             else:
                 os.remove( srcname )
         except:
-            print("Could not remove physical file")
+            print("Could not remove physical file '"+srcname+"'")
         self.popovQueue( srcname )
         self.inprogress = None
 
@@ -420,7 +424,7 @@ Simple transfers across LAN with avahi
         rate = round(percent_completed * 100, ndigits=2)                # Convert the completed fraction to percentage
         completed = "#" * int(rate)                                     # Calculate completed percentage
         spaces = " " * ( 100 - completed)                               # Calculate remaining completed rate
-        sys.stdout.write('[%s%s] %s%%' %(completed, spaces, rate))      # the pretty progress [####     ] 34%
+        print('[%s%s] %s%%' %(completed, spaces, rate))      # the pretty progress [####     ] 34%
         sys.stdout.flush()
 
     def handler_timeout(self):
