@@ -81,7 +81,7 @@ def get_resource_path(rel_path):
     abs_path_to_resource = os.path.abspath(rel_path_to_resource)
     return abs_path_to_resource
 
-VERSION      = "0.7"
+VERSION      = "0.8 conf subBeta"
 ICONDIR      = get_resource_path("./DropIcons")
 CONFIGFL     = os.path.abspath(os.path.expanduser("~/.drop.conf"))
 HUP          = get_resource_path(__file__)
@@ -122,7 +122,7 @@ if configfuse:
             "ActualDelete" : ActualDelete
         }
         json.dump(data, cfg)
-    print("Wrote default config")
+    if DEVMODE: print("Wrote default config")
 
 def customiconPlease(folderName, iconname=None):
     folder = Gio.File.new_for_path(folderName)
@@ -205,6 +205,13 @@ class TransferHandler(BaseHTTPRequestHandler):
 
     def getFromRemote(self,snp, path, fname):
         mainAppInd.mode = Modes.RECV
+        if "/" in fname:
+            needDirs = os.path.dirname(fname)
+            print("GonnaCreate '%s'" % needDirs)
+            try:
+                os.makedirs( needDirs, exist_ok=True)
+            except:
+                print("Things are gonna get foobar now, cannot create sub dirs.")
         c = pycurl.Curl()
         if not "local" in path:
             path = path.split(".")[0]+".local."
