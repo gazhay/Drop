@@ -254,7 +254,27 @@ class IndicatorDrop:
     inprogress  = None
     arrivals    = False
     Hosts       = []
-    Hostcheck   = None
+    hostitem    = None
+
+    def hostdiscover(self, hostname):
+        if not hostname in Hosts:
+            self.Hosts.append(hostname)
+        self.hostmenu()
+
+    def hostlost(self, hostname):
+        if hostname in Hosts:
+            self.Hosts.remove(hostname)
+        self.hostmenu()
+
+    def nullHandler(self, evt):
+        pass
+
+    def hostmenu(self):
+        submenu = Gtk.Menu()
+        for host in self.Hosts:
+            addMenuItem(submenu, host, self.sendToHost)
+        submenu.show()
+        self.hostitem.set_submenu( submenu )
 
     def __init__(self):
         self.ind = AppIndicator.Indicator.new("indicator-drop", self.statusIcons[0], AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
@@ -270,6 +290,8 @@ class IndicatorDrop:
         if DEVMODE:
             self.addMenuItem( self.menu, "Restart", self.reboot)
         self.addSeperator(self.menu)
+        self.hostitem = self.addMenuItem(self.menu, "Send To Host", self.nullHandler )
+        self.addSeperator(self.menu)
         self.addMenuItem(self.menu, "Exit", self.handler_menu_exit )
 
         self.menu.show()
@@ -280,6 +302,7 @@ class IndicatorDrop:
         item = Gtk.SeparatorMenuItem()
         item.show()
         menu.append(item)
+        return item
 
     def addMenuItem(self, menu, label, handler):
         item = Gtk.MenuItem()
@@ -287,13 +310,17 @@ class IndicatorDrop:
         item.connect("activate", handler)
         item.show()
         menu.append(item)
+        return item
 
-    def addRadioMenu(self, menu, label):
+    def addRadioMenu(self, menu, label, handler=None):
         item = Gtk.CheckMenuItem(label=label)
         item.set_active(is_active=False)
+        if handler!=None:
+            item.connect("activate", handler)
         # item.connect("activate", self.toggleMe)
         item.show()
         menu.append(item)
+        return item
 
     def addSubMenu(self, menu, label):
         pass
@@ -391,10 +418,6 @@ Simple transfers across LAN with avahi
                 # ANimate this
                 self.ind.set_icon( self.statusIcons[1] )
 
-            if self.Hosts != self.Hostcheck:
-                pass
-                # Update the "Send to" submenu here
-            self.Hostcheck = self.Hosts
             return True
         except KeyboardInterrupt:
             return False
@@ -451,7 +474,7 @@ class AvahiListener(object):
             print("Removing %s" % info['info'].server)
             self.cleanUpDir(info['info'].server)
             self.Hosts.remove(info)
-            mainAppInd.Hosts.remove(info['info'].server)
+            mainAppInd.hostlost(info['info'].server)
 
     def add_service(self, zeroconf, type, name):
         info = zeroconf.get_service_info(type, name)
@@ -465,7 +488,7 @@ class AvahiListener(object):
             # os.mkdir(newServ, 0o0755)
             # shutil.chown(newServ, user=DropUser, group=DropUser)
             self.Hosts.append({"name": name, "info": info})
-            mainAppInd.Hosts.append(info.server)
+            mainAppInd.hostdiscover(info.server)
         print("new server %s " % (info.server))
 
     def setTarget(self, targetobj):
