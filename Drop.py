@@ -76,7 +76,7 @@ def get_resource_path(rel_path):
     abs_path_to_resource = os.path.abspath(rel_path_to_resource)
     return abs_path_to_resource
 
-VERSION   = "0.6"
+VERSION   = "0.7"
 ICONDIR   = get_resource_path("./DropIcons")
 DEVMODE   = True
 HUP       = get_resource_path(__file__)
