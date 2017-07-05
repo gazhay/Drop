@@ -272,7 +272,7 @@ class IndicatorDrop:
     def hostmenu(self):
         submenu = Gtk.Menu()
         for host in self.Hosts:
-            addMenuItem(submenu, host, self.sendToHost)
+            self.addMenuItem(submenu, host, self.sendToHost)
         submenu.show()
         self.hostitem.set_submenu( submenu )
 
