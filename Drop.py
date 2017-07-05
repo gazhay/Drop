@@ -75,7 +75,7 @@ def get_resource_path(rel_path):
 
 VERSION   = "0.6"
 ICONDIR   = get_resource_path("./DropIcons")
-DEVMODE   = True
+DEVMODE   = False
 GetMyUser = subprocess.run("who | awk '{print $1}' | head -n 1", shell=True, stdout=subprocess.PIPE)
 DropUser  = GetMyUser.stdout.decode("utf8").rstrip()
 DropRoot  = "/home/"+DropUser+"/Drop/"
@@ -170,7 +170,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         c = pycurl.Curl()
         if not "local" in path:
             path = path.split(".")[0]+".local."
-        ccmd = 'http://'+snp+"/"+path+"/"+fname
+        ccmd = 'http://'+snp+"/"+path+"/"+quote_plus(fname)
         c.setopt(c.URL, ccmd)
         with open(DropLand+fname, 'wb') as f:
             c.setopt(c.WRITEFUNCTION, f.write)
