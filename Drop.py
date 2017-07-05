@@ -257,12 +257,12 @@ class IndicatorDrop:
     hostitem    = None
 
     def hostdiscover(self, hostname):
-        if not hostname in Hosts:
+        if not hostname in self.Hosts:
             self.Hosts.append(hostname)
         self.hostmenu()
 
     def hostlost(self, hostname):
-        if hostname in Hosts:
+        if hostname in self.Hosts:
             self.Hosts.remove(hostname)
         self.hostmenu()
 
@@ -275,6 +275,9 @@ class IndicatorDrop:
             addMenuItem(submenu, host, self.sendToHost)
         submenu.show()
         self.hostitem.set_submenu( submenu )
+
+    def sendToHost(self, evt):
+        pass
 
     def __init__(self):
         self.ind = AppIndicator.Indicator.new("indicator-drop", self.statusIcons[0], AppIndicator.IndicatorCategory.SYSTEM_SERVICES)
