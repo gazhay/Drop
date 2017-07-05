@@ -555,13 +555,15 @@ if __name__ == "__main__":
         browser = Thread(target=ServiceBrowser, args=[zeroconf, "_drop-target._tcp.local.", listener])
         browser.daemon =True
         browser.start()
-        # # HTTPd for file transfers
+        # # HTTPd for control messages = overkill
         control = Thread(target=run_on, args=[DropPort])
         control.daemon = True # Do not make us wait for you to exit
         control.start()
+        # # Httpd for file transfers
         server = Thread(target=run_on, args=[TranPort,DropRoot])
         server.daemon = True # Do not make us wait for you to exit
         server.start()
+        # Let's go
         mainAppInd.main()
         print("Begin Shutdown")
         # with suppress(Exception):
