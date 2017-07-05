@@ -78,7 +78,7 @@ def get_resource_path(rel_path):
 
 VERSION   = "0.6"
 ICONDIR   = get_resource_path("./DropIcons")
-DEVMODE   = False
+DEVMODE   = True
 GetMyUser = subprocess.run("who | awk '{print $1}' | head -n 1", shell=True, stdout=subprocess.PIPE)
 DropUser  = GetMyUser.stdout.decode("utf8").rstrip()
 DropRoot  = "/home/"+DropUser+"/Drop/"
@@ -311,7 +311,7 @@ class IndicatorDrop:
 
         self.addMenuItem( self.menu, "About...", self.aboutDialog)
         if DEVMODE:
-            self.addMenuItem( self.menu, "Restart", self.reboot)
+            self.addMenuItem( self.menu, " ~ Restart", self.reboot)
         self.addSeperator(self.menu)
         self.hostitem = self.addMenuItem(self.menu, "Send To Host", self.nullHandler )
         self.addSeperator(self.menu)
