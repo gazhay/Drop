@@ -372,7 +372,7 @@ Simple transfers across LAN with avahi
         dlg.show()
 
     def reboot(self, evt):
-        Gtk.main_quit()
+        # Gtk.main_quit()
         os.execv(__file__, sys.argv)
 
     def handler_menu_exit(self, evt):
