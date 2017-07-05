@@ -1,4 +1,49 @@
 #!/usr/bin/env python3
+
+#                          ,..
+#                      _,-'   `-,_
+#                   ,,'          ``._
+#                ,-'                ``..
+#            _,-'  ____                 `-.
+#         ,-'     |  _ \ _ __ ___  _ __    `-._
+#     _,-'        | | | | '__/ _ \| '_ \       `..
+#   .'            | |_| | | | (_) | |_) |         `.,_
+# ,-..            |____/|_|  \___/| .__/          _,-'
+# |   `-._                        |_|          ,,'   |
+# |       `..                              _.-'      |
+# |          `-._                       ,-'          |
+# |              `-._               _.-'             |
+# |                 '`..         ,-'                 |
+# |                     `-._ _,-'                    |
+# |                         '                        |
+# |                         |                        |
+# |                         |                        |
+# |                         |                        |
+# |                         |                        |
+# |                         |                        |
+# |                         |                        |
+# |                         |                        |
+#  `,_                      |                      ,-'
+#     -'.                   |                  _,-'
+#        ``,_               |               ,,'
+#            --.            |            ,-'
+#               `.._        |        _.-'
+#                    .      |     ,.'
+#                     ``-,  |  ,-'
+#                         `-'`'
+#
+#
+# A Hacky Lan based linux file transfer program.
+#
+# Using avahi we discover local clients, and create a local directory for them
+#     Usually ~/Drop/otherclients.local.
+#
+# Dropping files into this will transfer them to the client's landing directory
+#     Usually ~/Drop/Landed
+#
+# Control the daemon via the AppIndicator menu
+#
+
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib, GdkPixbuf
@@ -21,17 +66,13 @@ from threading import Thread
 tempsock = "/tmp/drop"
 polldelay = 5
 
-# TODO
-#
-# Better menus wioth options
-#
 def get_resource_path(rel_path):
     dir_of_py_file = os.path.dirname(__file__)
     rel_path_to_resource = os.path.join(dir_of_py_file, rel_path)
     abs_path_to_resource = os.path.abspath(rel_path_to_resource)
     return abs_path_to_resource
 
-VERSION   = "0.5b"
+VERSION   = "0.6"
 ICONDIR   = get_resource_path("./DropIcons")
 DEVMODE   = True
 GetMyUser = subprocess.run("who | awk '{print $1}' | head -n 1", shell=True, stdout=subprocess.PIPE)
