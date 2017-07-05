@@ -170,7 +170,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         c = pycurl.Curl()
         if not "local" in path:
             path = path.split(".")[0]+".local."
-        ccmd = 'http://'+snp+"/"+path+"/"+fname
+        ccmd = 'http://'+snp+"/"+path+"/"+quote(fname)
         print("Will ask for '"+ccmd+"'")
         c.setopt(c.URL, ccmd)
         with open(DropLand+fname, 'wb') as f:
