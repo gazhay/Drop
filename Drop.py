@@ -59,7 +59,7 @@ except:
 import re,subprocess,socket
 import shutil, glob
 import time,os,signal,sys
-from urllib.parse import quote_plus, unquote_plus
+from urllib.parse import quote, unquote
 from zeroconf import ServiceBrowser, Zeroconf, ServiceInfo
 from contextlib import suppress
 from threading import Thread
@@ -177,7 +177,7 @@ class TransferHandler(BaseHTTPRequestHandler):
             c.setopt(c.WRITEFUNCTION, f.write)
             c.setopt(c.PROGRESSFUNCTION, mainAppInd.transferProgress)
             c.perform()
-        cmd = "curl http://"+snp.split(":")[0]+":"+str(DropPort)+"/?DropDone="+quote_plus(fname)
+        cmd = "curl http://"+snp.split(":")[0]+":"+str(DropPort)+"/?DropDone="+quote(fname)
         ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
         return
@@ -195,7 +195,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         try:
             if self.path.startswith("/?DropPing"):
                 self.send_response(200)
-                fetchMe = unquote_plus(self.path[11:])
+                fetchMe = unquote(self.path[11:])
                 print("fetchme = '"+fetchMe+"'")
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
@@ -204,7 +204,7 @@ class TransferHandler(BaseHTTPRequestHandler):
                 self.getFromRemote("%s:%d" % (servername,TranPort), MYHOSTNAME, fetchMe)
             elif self.path.startswith("/?DropDone"):
                 self.send_response(200)
-                fetchMe = unquote_plus(self.path[11:])
+                fetchMe = unquote(self.path[11:])
                 self.send_header('Content-type','text/plain')
                 self.end_headers()
                 message = "DropDone!"
@@ -245,7 +245,7 @@ class FileDrop(Thread):
         (servername,junk,residualpath) = guessserver.partition("/")
         # New thinking.
         print("Path = '"+residualpath+"'")
-        cmd = "curl http://"+servername+":"+str(DropPort)+"/?DropPing="+quote_plus(residualpath)
+        cmd = "curl http://"+servername+":"+str(DropPort)+"/?DropPing="+quote(residualpath)
         ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
         print(ping.stdout.decode("utf8"))
         # self.callback(self.srcfile)
