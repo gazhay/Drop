@@ -438,6 +438,7 @@ Simple transfers across LAN with avahi
         files = glob.glob(thisroot+"/*")
         for afile in files:
             if os.path.isdir(afile):
+                if "Landed/" in afile: continue
                 print("Recursion into "+(afile))
                 thisreturn.extend(self.rCheck(afile))
             else:
@@ -486,7 +487,7 @@ Simple transfers across LAN with avahi
         percent_completed = float(total_downloaded)/total_to_download       # You are calculating amount uploaded
         rate = round(percent_completed * 100, ndigits=2)                # Convert the completed fraction to percentage
         completed = "#" * int(rate)                                     # Calculate completed percentage
-        spaces = " " * ( 100 - percent_completed)                               # Calculate remaining completed rate
+        spaces = " " * int( 100 - percent_completed)                               # Calculate remaining completed rate
         print('[%s%s] %s%%' %(completed, spaces, rate))      # the pretty progress [####     ] 34%
         sys.stdout.flush()
 
