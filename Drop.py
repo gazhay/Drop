@@ -472,6 +472,7 @@ Simple transfers across LAN with avahi
             else:
                 os.remove( srcname )
             # need to rmdir directories if empty
+            print("Try to delete %s" %( os.listdir(os.path.dirname(srcname))))
             if not os.listdir(os.path.dirname(srcname)):
                 try:
                     os.rmdir(dir)
