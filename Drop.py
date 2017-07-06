@@ -50,6 +50,7 @@
 #    - Should probably have shortname fqdn etc
 # - Preferences
 # - Progress
+# - check file is not copying
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -438,7 +439,6 @@ Simple transfers across LAN with avahi
         files = glob.glob(thisroot+"/*")
         for afile in files:
             if os.path.isdir(afile):
-                if "Landed/" in afile: continue
                 print("Recursion into "+(afile))
                 thisreturn.extend(self.rCheck(afile))
             else:
@@ -472,12 +472,11 @@ Simple transfers across LAN with avahi
             else:
                 os.remove( srcname )
             # need to rmdir directories if empty
-            print("Try to delete %s" %( os.listdir(os.path.dirname(srcname))))
-            if not os.listdir(os.path.dirname(srcname)):
+            if os.listdir(os.path.dirname(srcname))==[]:
                 try:
-                    os.rmdir(dir)
+                    os.rmdir(os.path.dirname(srcname))
                 except:
-                    print("Dir not empty")
+                    print("Dir not empty ")
         except:
             print("Could not remove physical file '"+srcname+"'")
         self.popovQueue( srcname )
