@@ -49,6 +49,7 @@
 # - Decode bonjour/avahi hosts extra info
 #    - Should probably have shortname fqdn etc
 # - Preferences
+# - Progress
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -207,6 +208,7 @@ class TransferHandler(BaseHTTPRequestHandler):
         mainAppInd.mode = Modes.RECV
         if "/" in fname:
             needDirs = os.path.dirname(fname)
+            needDirs = DropLand+needDirs
             print("GonnaCreate '%s'" % needDirs)
             try:
                 os.makedirs( needDirs, exist_ok=True)
@@ -220,7 +222,9 @@ class TransferHandler(BaseHTTPRequestHandler):
         c.setopt(c.URL, ccmd)
         with open(DropLand+fname, 'wb') as f:
             c.setopt(c.WRITEFUNCTION, f.write)
-            c.setopt(c.PROGRESSFUNCTION, mainAppInd.transferProgress)
+            c.setopt(c.NOPROGRESS, False) #reqd for below
+            c.setopt(c.XFERINFOFUNCTION, mainAppInd.transferProgress)
+#            c.setopt(c.PROGRESSFUNCTION, mainAppInd.transferProgress)
             c.perform()
         cmd = "curl http://"+snp.split(":")[0]+":"+str(DropPort)+"/?DropDone="+quote(fname)
         ping = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE)
@@ -429,16 +433,28 @@ Simple transfers across LAN with avahi
         if item in self.filequeue:
             self.filequeue.remove(item)
 
+    def rCheck(self, thisroot):
+        thisreturn = []
+        files = glob.glob(thisroot+"/*")
+        for afile in files:
+            if os.path.isdir(afile):
+                print("Recursion into "+(afile))
+                thisreturn.extend(self.rCheck(afile))
+            else:
+                print("Ordinary File "+afile)
+                thisreturn.append(afile)
+        return thisreturn
+
+
     def fileCheck(self):
         # check for os err on ls
         self.lastpoll=time.time()
-        files = glob.glob(DropRoot+"*/*")
+        # files = glob.glob(DropRoot+"*/*")
+        files = self.rCheck(DropRoot+"*")
         self.arrivals=False
         self.mode=Modes.IDLE
         for afile in files:
-            if os.isdir(afile):
-                pass
-            elif not "Landed/" in afile:
+            if not "Landed/" in afile:
                 self.pushToQueue(afile)
             else:
                 self.arrivals=True
@@ -454,6 +470,12 @@ Simple transfers across LAN with avahi
                 os.rename(srcname, DropRoot+".staging/"+nameonly)
             else:
                 os.remove( srcname )
+            # need to rmdir directories if empty
+            if not os.listdir(os.path.dirname(srcname)):
+                try:
+                    os.rmdir(dir)
+                except:
+                    print("Dir not empty")
         except:
             print("Could not remove physical file '"+srcname+"'")
         self.popovQueue( srcname )
@@ -480,6 +502,7 @@ Simple transfers across LAN with avahi
                 self.mode = Modes.SEND
                 if self.inprogress == None:
                     self.inprogress = self.filequeue[0]
+                    # no need to thread this. let's inline it.
                     FileDrop(self.inprogress, self.doneCopy).run()
                     # copy.run()
             if self.arrivals:
@@ -521,7 +544,7 @@ class AvahiListener(object):
     info  = None
 
     def __init__(self):
-        desc = {'path': DropRoot, "realip": MYIPADDR}
+        desc = {'version': VERSION, "self_id_ip": MYIPADDR}
 
         self.info = ServiceInfo("_drop-target._tcp.local.",
                            "_"+MYHOSTNAME+"._drop-target._tcp.local.",
