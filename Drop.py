@@ -530,7 +530,8 @@ Simple transfers across LAN with avahi
     def main(self):
         #  attempt multiprocess shenanigans
         try:
-            Gtk.main()
+            GLib.MainLoop().run()
+            # Gtk.main()
         except KeyboardInterrupt:
             self.exit()
             return
