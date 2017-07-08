@@ -126,9 +126,10 @@ if configfuse:
             "SleepyBeta"   : SleepyBeta
         }
         json.dump(data, cfg)
-    if DEVMODE: print("Wrote default config")
+    if DEVMODE: print("Wrote default config %s" % CONFIGFL)
 
 if SleepyBeta:
+    print("Sleepy imports")
     import dbus # For sleep branch
     from dbus.mainloop.glib import DBusGMainLoop
 
