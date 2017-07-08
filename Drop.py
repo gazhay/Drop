@@ -515,7 +515,7 @@ Simple transfers across LAN with avahi
         try:
             if (self.lastpoll==None) or ((time.time() - self.lastpoll))>polldelay:
                 self.fileCheck()
-                if hasSlept:
+                if self.hasSlept:
                     listener.publish()
                     self.hasSlept=None
 
