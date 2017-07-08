@@ -629,6 +629,7 @@ class AvahiListener(object):
 global listener # Be sensible here once beta is over
 
 def handle_sleep(*args):
+    print("Handling Sleep Event")
     listener.unpublish()
 
 if __name__ == "__main__":
