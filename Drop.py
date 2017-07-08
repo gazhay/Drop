@@ -513,13 +513,12 @@ Simple transfers across LAN with avahi
         # every x time poll directories
         # Should really go with pyinotify or some such
         try:
-            sincelastpoll = ((time.time() - self.lastpoll))
-            if (self.lastpoll==None) or sincelastpoll>polldelay:
+            if (self.lastpoll==None) or ((time.time() - self.lastpoll))>polldelay:
                 self.fileCheck()
                 if hasSlept:
                     listener.publish()
                     self.hasSlept=None
-                
+
             if len(self.filequeue)>0:
                 self.mode = Modes.SEND
                 if self.inprogress == None:
