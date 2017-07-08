@@ -83,7 +83,7 @@ def get_resource_path(rel_path):
     abs_path_to_resource = os.path.abspath(rel_path_to_resource)
     return abs_path_to_resource
 
-VERSION      = "0.8 conf subBeta"
+VERSION      = "0.8 sleepyBeta"
 ICONDIR      = get_resource_path("./DropIcons")
 CONFIGFL     = os.path.abspath(os.path.expanduser("~/.drop.conf"))
 HUP          = get_resource_path(__file__)
@@ -108,6 +108,7 @@ with open(CONFIGFL, "r") as cfg:
     DropPort     = data.get("DropPort"    , 58769                     )
     TranPort     = data.get("TranPort"    , DropPort+1                )
     ActualDelete = data.get("ActualDelete", True                      )
+    SleepyBeta   = data.get("SleepyBeta"  , False                     )
 
 mainAppInd   = None
 
@@ -121,10 +122,15 @@ if configfuse:
             "DropStage"    : DropStage,
             "DropPort"     : DropPort,
             "TranPort"     : TranPort,
-            "ActualDelete" : ActualDelete
+            "ActualDelete" : ActualDelete,
+            "SleepyBeta"   : SleepyBeta
         }
         json.dump(data, cfg)
     if DEVMODE: print("Wrote default config")
+
+if SleepyBeta:
+    import dbus # For sleep branch
+    from dbus.mainloop.glib import DBusGMainLoop
 
 def customiconPlease(folderName, iconname=None):
     folder = Gio.File.new_for_path(folderName)
@@ -323,8 +329,17 @@ class IndicatorDrop:
     def nullHandler(self, evt):
         pass
 
+    def checkActive(self, mi):
+        if len(self.Hosts)==0:
+            mi.set_sensitive(False)
+        else:
+            # Only become acive when hosts are available
+            mi.set_sensitive(True)
+        mi.show()
+
     def hostmenu(self):
         submenu = Gtk.Menu()
+        self.checkActive(self.hostitem)
         for host in self.Hosts:
             self.addMenuItem(submenu, host, self.sendToHost)
         submenu.show()
@@ -520,6 +535,7 @@ Simple transfers across LAN with avahi
                 # ANimate this
                 self.ind.set_icon( self.statusIcons[1] )
 
+            self.checkActive(self.hostitem)
             return True
         except KeyboardInterrupt:
             return False
@@ -531,6 +547,7 @@ Simple transfers across LAN with avahi
         #  attempt multiprocess shenanigans
         try:
             GLib.MainLoop().run()
+            #https://bugzilla.gnome.org/show_bug.cgi?id=622084#c4
             # Gtk.main()
         except KeyboardInterrupt:
             self.exit()
@@ -610,6 +627,10 @@ class AvahiListener(object):
 
 # ############################################################################## Main
 
+def handle_sleep(*args):
+    global listener
+    listener.unpublish()
+
 if __name__ == "__main__":
     try:
         mainAppInd = IndicatorDrop() # Basic Menu
@@ -631,6 +652,16 @@ if __name__ == "__main__":
         server = Thread(target=run_on, args=[TranPort,DropRoot])
         server.daemon = True # Do not make us wait for you to exit
         server.start()
+        if SleepyBeta:
+            global listener
+            DBusGMainLoop(set_as_default=True)     # integrate into gobject main loop
+            bus = dbus.SystemBus()                 # connect to system wide dbus
+            bus.add_signal_receiver(               # define the signal to listen to
+                handle_sleep,                      # callback function
+                'PrepareForSleep',                 # signal name
+                'org.freedesktop.login1.Manager',  # interface
+                'org.freedesktop.login1'           # bus name
+            )
         # Let's go
         mainAppInd.main()
         print("Begin Shutdown")
