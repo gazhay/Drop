@@ -626,9 +626,9 @@ class AvahiListener(object):
         # os.remove("/etc/avahi/services/Drop.service")
 
 # ############################################################################## Main
+global listener # Be sensible here once beta is over
 
 def handle_sleep(*args):
-    global listener
     listener.unpublish()
 
 if __name__ == "__main__":
@@ -653,7 +653,6 @@ if __name__ == "__main__":
         server.daemon = True # Do not make us wait for you to exit
         server.start()
         if SleepyBeta:
-            global listener
             DBusGMainLoop(set_as_default=True)     # integrate into gobject main loop
             bus = dbus.SystemBus()                 # connect to system wide dbus
             bus.add_signal_receiver(               # define the signal to listen to
