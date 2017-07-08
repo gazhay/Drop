@@ -108,7 +108,7 @@ with open(CONFIGFL, "r") as cfg:
     DropPort     = data.get("DropPort"    , 58769                     )
     TranPort     = data.get("TranPort"    , DropPort+1                )
     ActualDelete = data.get("ActualDelete", True                      )
-    SleepyBeta   = data.get("SleepyBeta"  , False                     )
+    SleepyBeta   = data.get("SleepyBeta"  , True                      )
 
 mainAppInd   = None
 
@@ -596,7 +596,7 @@ class AvahiListener(object):
             # if host.get("name")== name:
             info = host
             # print(info)
-            print("Removing %s" % info['info'].server)
+            print("[-] Removing %s" % info['info'].server)
             self.cleanUpDir(info['info'].server)
             self.Hosts.remove(info)
             mainAppInd.hostlost(info['info'].server)
@@ -614,7 +614,7 @@ class AvahiListener(object):
             # shutil.chown(newServ, user=DropUser, group=DropUser)
             self.Hosts.append({"name": name, "info": info})
             mainAppInd.hostdiscover(info.server)
-        print("new server %s " % (info.server))
+        print("[+] Adding %s " % (info.server))
 
     def setTarget(self, targetobj):
         self.target = targetobj
@@ -643,10 +643,6 @@ def handle_sleep(*args):
     print("Handling Sleep Event")
     listener.unpublish()
     mainAppInd.hasSlept=True
-
-def handle_resume(*args):
-    print("Handling awake")
-    listener.publish()
 
 if __name__ == "__main__":
     try:
