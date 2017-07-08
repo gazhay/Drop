@@ -316,6 +316,7 @@ class IndicatorDrop:
     arrivals    = False
     Hosts       = []
     hostitem    = None
+    hasSlept    = None
 
     def hostdiscover(self, hostname):
         if not hostname in self.Hosts:
@@ -512,9 +513,13 @@ Simple transfers across LAN with avahi
         # every x time poll directories
         # Should really go with pyinotify or some such
         try:
-            if (self.lastpoll==None) or ((time.time() - self.lastpoll)>polldelay):
+            sincelastpoll = ((time.time() - self.lastpoll))
+            if (self.lastpoll==None) or sincelastpoll>polldelay:
                 self.fileCheck()
-
+                if hasSlept:
+                    listener.publish()
+                    self.hasSlept=None
+                
             if len(self.filequeue)>0:
                 self.mode = Modes.SEND
                 if self.inprogress == None:
@@ -671,12 +676,13 @@ if __name__ == "__main__":
                 'org.freedesktop.login1.Manager',  # interface
                 'org.freedesktop.login1'           # bus name
             )
-            bus.add_signal_receiver(           # defince the signal to listen to
-                handle_resume,            # name of callback function
-                'Resuming',                        # singal name
-                'org.freedesktop.UPower',          # interface
-                'org.freedesktop.UPower'           # bus name
-            )
+            # bus.add_signal_receiver(           # defince the signal to listen to
+            #     handle_resume,            # name of callback function
+            #     'Resuming',                        # singal name
+            #     'org.freedesktop.UPower',          # interface
+            #     'org.freedesktop.UPower'           # bus name
+            # )
+            mainAppInd.hasSlept=True
         # Let's go
         mainAppInd.main()
         print("Begin Shutdown")
