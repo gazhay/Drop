@@ -617,13 +617,16 @@ class AvahiListener(object):
 
     def setZC(self, targetZC):
         self.zc = targetZC
+        self.publish()
+
+    def publish(self):
         self.publishedas = self.info
         self.zc.register_service(self.info)
 
     def unpublish(self):
         self.cleanAll()
         self.zc.unregister_service(self.publishedas)
-        self.zc.close()
+        # self.zc.close()
         # os.remove("/etc/avahi/services/Drop.service")
 
 # ############################################################################## Main
@@ -632,6 +635,10 @@ global listener # Be sensible here once beta is over
 def handle_sleep(*args):
     print("Handling Sleep Event")
     listener.unpublish()
+
+def handle_resume(*args):
+    print("Handling awake")
+    listener.publish()
 
 if __name__ == "__main__":
     try:
@@ -663,6 +670,12 @@ if __name__ == "__main__":
                 'PrepareForSleep',                 # signal name
                 'org.freedesktop.login1.Manager',  # interface
                 'org.freedesktop.login1'           # bus name
+            )
+            bus.add_signal_receiver(           # defince the signal to listen to
+                handle_resume,            # name of callback function
+                'Resuming',                        # singal name
+                'org.freedesktop.UPower',          # interface
+                'org.freedesktop.UPower'           # bus name
             )
         # Let's go
         mainAppInd.main()
