@@ -517,7 +517,7 @@ Simple transfers across LAN with avahi
                 self.fileCheck()
                 if self.hasSlept:
                     listener.publish()
-                    self.hasSlept=None
+                    self.hasSlept=False
 
             if len(self.filequeue)>0:
                 self.mode = Modes.SEND
@@ -625,7 +625,10 @@ class AvahiListener(object):
 
     def publish(self):
         self.publishedas = self.info
-        self.zc.register_service(self.info)
+        try:
+            self.zc.register_service(self.info)
+        except:
+            print("Publish error - most likely non uniquer")
 
     def unpublish(self):
         self.cleanAll()
@@ -639,6 +642,7 @@ global listener # Be sensible here once beta is over
 def handle_sleep(*args):
     print("Handling Sleep Event")
     listener.unpublish()
+    mainAppInd.hasSlept=True
 
 def handle_resume(*args):
     print("Handling awake")
@@ -681,7 +685,6 @@ if __name__ == "__main__":
             #     'org.freedesktop.UPower',          # interface
             #     'org.freedesktop.UPower'           # bus name
             # )
-            mainAppInd.hasSlept=True
         # Let's go
         mainAppInd.main()
         print("Begin Shutdown")
